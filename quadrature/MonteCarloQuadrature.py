@@ -66,12 +66,13 @@ class MonteCarloQuadrature(Quadrature):
         return Quadrature(self.device, quadpts, weights, h)      
 
     def circle_samples(self, center, radius, number_of_samples):
-        # r = R * sqrt(rand(1,N));
-        # t = rand(1,N)*2*pi;
-        # xmcpts = r.*cos(t) + cen(1);
-        # ymcpts = r.*sin(t) + cen(2);
-        # weight = pi * R^2;
-        # weight = weight / N; 
+        """ The Monte Carlo information on 2d circle.
+            The random samples are generated from the distibution of polar variables.
+            Let X ~ U([0,1]), then radius ~ R * sqrt(X)
+            Let Y ~ U([0,1]), then theta ~ 2*pi * Y
+            x = radius * cos(theta)
+            y = radius * sin(theta)
+        """    
 
         pi = np.pi
         measure = pi * radius**2
@@ -87,9 +88,15 @@ class MonteCarloQuadrature(Quadrature):
         return Quadrature(self.device, quadpts, weights, h)
 
     def ball_samples(self, center, radius, number_of_samples):
-        # x = r .* cos(elevation) .* cos(azimuth)
-        # y = r .* cos(elevation) .* sin(azimuth)
-        # z = r .* sin(elevation)
+        """ The Monte Carlo information on 3d ball.
+            The random samples are generated from the distibution of spherical variables.
+            Let X ~ U([0, 1]), then radius ~ R * X^(1/3)
+            Let Y ~ U([0, 1]), then phi ~ 2*pi * Y, ranges in [0, 2*pi]
+            Let Z ~ U([-1,1]), then theta ~ arcsin(Z), ranges in [-pi/2, pi/2]
+            x = radius * cos(theta) * cos(phi)
+            y = radius * cos(theta) * sin(phi)
+            z = radius * sin(theta)
+        """  
 
         pi = np.pi
         measure = (4/3) * pi * radius**3
