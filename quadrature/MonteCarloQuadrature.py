@@ -5,7 +5,7 @@ from Quadrature import Quadrature
 ## random samples
 ## numpy    
 
-class MonteCarloQuadrature(Quadrature):
+class MonteCarloDomain():
 
     def __init__(self, device):
         """ The Monte-Carlo sampling information on an arbitrary domain.
@@ -87,7 +87,7 @@ class MonteCarloQuadrature(Quadrature):
  
         return Quadrature(self.device, quadpts, weights, h)
 
-    def ball_samples(self, center, radius, number_of_samples):
+    def sphere_samples(self, center, radius, number_of_samples):
         """ The Monte Carlo information on 3d ball.
             The random samples are generated from the distibution of spherical variables.
             Let X ~ U([0, 1]), then radius ~ R * X^(1/3)
@@ -114,13 +114,36 @@ class MonteCarloQuadrature(Quadrature):
         return Quadrature(self.device, quadpts, weights, h)        
 
 
-class BoundaryMonteCarloQuadrature(MonteCarloQuadrature):
-    """ The cartesian Monte-Carlo sampling information on the boundary
+class MonteCarloQuadrature(MonteCarloDomain):
+    """ The Monte-Carlo sampling information on domain and boundary
         of a certain domain for 1D, 2D and 3D.
+        Examples:
+        -------
+        use_gpu = torch.cuda.is_available()
+        device = torch.device("cuda" if use_gpu else "cpu")
+        sampling = MonteCarloQuadrature(device)
+        sampling.interval_samples
+        sampling.interval_boundary_samples
+        ...
     """
 
     def __init__(self, device):
-        self.device = device
+        super(MonteCarloQuadrature, self).__init__(device)
+
+    def interval_samples(self, interval, number_of_samples):
+        return super().interval_samples(interval, number_of_samples)
+
+    def rectangle_samples(self, rectangle, number_of_samples):
+        return super().rectangle_samples(rectangle, number_of_samples)
+
+    def cuboid_samples(self, cuboid, number_of_samples):
+        return super().cuboid_samples(cuboid, number_of_samples)
+
+    def circle_samples(self, center, radius, number_of_samples):
+        return super().circle_samples(center, radius, number_of_samples)
+
+    def sphere_samples(self, center, radius, number_of_samples):
+        return super().sphere_samples(center, radius, number_of_samples)
 
     def interval_boundary_samples(self, interval):
 
@@ -200,7 +223,7 @@ class BoundaryMonteCarloQuadrature(MonteCarloQuadrature):
         h = np.array([1 / number_of_samples])
         return Quadrature(self.device, quadpts, weights, h)
 
-    def ball_boundary_samples(self, center, radius, number_of_samples):
+    def sphere_boundary_samples(self, center, radius, number_of_samples):
         """ The Monte Carlo information on 3d shpere.
             The random samples are generated from the distibution of spherical variables.
             Let radius = R being a constant.

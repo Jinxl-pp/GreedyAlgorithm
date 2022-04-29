@@ -5,7 +5,7 @@ from Quadrature import Quadrature
 ## quadrature points
 ## numpy    
 
-class GaussLegendreQuadrature(Quadrature):
+class GaussLegendreDomain():
     
     def __init__(self, index, device):
         """ The cartesian Gauss-Lengendre quadrature information on the reference 1d interval [-1,1].
@@ -166,15 +166,26 @@ class GaussLegendreQuadrature(Quadrature):
         return Quadrature(self.device, quadpts, weights, h)
 
     
-class BoundaryGaussLegendreQuadrature(GaussLegendreQuadrature):
+class GaussLegendreQuadrature(GaussLegendreDomain):
     """ The cartesian Gauss-Lengendre quadrature information on the boundary
-        of a rectangel domain for 1D, 2D and 3D.
+        of a certain domain for 1D, 2D and 3D.
     """
 
-    def __init__(self, index, device):
+    def __init__(self, index_domian, index_boundary, device):
+        super(GaussLegendreQuadrature, self).__init__(index_domian, device)
+        self.index = index_boundary
 
-        self.index = index
-        self.device = device
+    def interval_quadpts(self, interval, h):
+        return super().interval_quadpts(interval, h)
+
+    def interval_quadpts_exact(self, x, h):
+        return super().interval_quadpts_exact(x, h)
+
+    def rectangle_quadpts(self, rectangle, h):
+        return super().rectangle_quadpts(rectangle, h)
+
+    def cuboid_quadpts(self, cuboid, h):
+        return super().cuboid_quadpts(cuboid, h)
 
     def interval_boundary_quadpts(self, interval):
 
