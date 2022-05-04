@@ -27,9 +27,9 @@ class ShallowNN(nn.Module):
         return out
     
 
-class basis_function(nn.Module):
+class BasisFunction(nn.Module):
     def __init__(self, in_dim, activation_function):
-        super(basis_function, self).__init__()
+        super(BasisFunction, self).__init__()
         self.layer = nn.Linear(in_dim, 1)
         self.activation_function = activation_function
         
