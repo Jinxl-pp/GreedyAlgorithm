@@ -34,7 +34,7 @@ def _cubic_interpolate(x1, f1, g1, x2, f2, g2, bounds=None):
         return min(max(min_pos, xmin_bound), xmax_bound)
     else:
         return (xmin_bound + xmax_bound) / 2.
-
+        
 
 def strong_wolfe(obj_func,
                   x,
@@ -226,57 +226,3 @@ def armijo(obj_func,
         t = c1 * c2 ** c2_power
 
     return f_new, g_new, t, ls_func_evals
-
-
-def arc_armijo(obj_func,
-                  x,
-                  d,
-                  f,
-                  g,
-                  projection,
-                  m=1,
-                  c1=10, 
-                  c2=0.5, 
-                  c3=1e-4,
-                  max_ls=25):
-
-    t = c1 * c2 ** m
-    g = g.clone(memory_format=torch.contiguous_format)
-    # evaluate objective and gradient using initial step
-    f_new, g_new = obj_func(x, t, d)
-    ls_func_evals = 1
-
-    # determine a point satisfying the Armijo criteria
-    ls_iter = 0
-    dist_norm2 = 0
-    while ls_iter < max_ls:
-        # check conditions
-        if f_new <= (f - c3/t * dist_norm2) and (ls_iter > 1):
-            break
-
-        # update step
-        m += 1
-        t = c1 * c2 ** m
-
-        # next step
-        f_new, g_new = obj_func(x, t, d)
-        ls_func_evals += 1
-        ls_iter += 1
-        xtmp = x.copy()
-        for i in range(len(xtmp)):
-            xtmp[i].add_(d[i], alpha=t)
-        projection(xtmp)
-        
-        dist = torch.zeros(len(xtmp))
-        for i in range(len(xtmp)):
-            dist[i] = xtmp[i] - x[i]
-        dist_norm2 = dist.pow(2).mean()
-
-    # reached max number of iterations?
-    if ls_iter == max_ls:
-        c2_power = m
-        t = c1 * c2 ** c2_power
-
-    return f_new, g_new, t, ls_func_evals
-
-    

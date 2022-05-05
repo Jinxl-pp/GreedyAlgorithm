@@ -1,7 +1,10 @@
+import sys
+sys.path.append('../')
+
 import torch
 import torch.nn as nn 
 import numpy as np
-
+from optimization import *
 
 dtype = torch.float64
 torch.set_default_dtype(dtype)
@@ -28,9 +31,9 @@ class ShallowNN(nn.Module):
     
 
 class BasisFunction(nn.Module):
-    def __init__(self, in_dim, activation_function):
+    def __init__(self, base_dim, activation_function):
         super(BasisFunction, self).__init__()
-        self.layer = nn.Linear(in_dim, 1)
+        self.layer = nn.Linear(base_dim, 1)
         self.activation_function = activation_function
         
     def update_neuron(self, parameters):
@@ -43,3 +46,34 @@ class BasisFunction(nn.Module):
         val = self.layer(p)
         val = self.activation_function(val)
         return val
+
+
+class Dictionary(BasisFunction):
+    
+    def __init__(self, 
+                base_dim, 
+                activation_function,
+                optimizer,
+                param_dim, 
+                param_mesh,
+                param_domain,):
+        super().__init__(base_dim, activation_function)
+
+        self.optimizer = optimizer
+        self.param_dim = param_dim
+        self.param_mesh = param_mesh
+        self.param_domain =  param_domain
+
+    def _gather_flat_param():
+        pass
+
+    def _basis_train():
+        pass
+
+    def select_initial_basis():
+        pass
+
+    def find_optimal_basis():
+        pass
+
+

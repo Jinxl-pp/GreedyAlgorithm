@@ -1,6 +1,7 @@
 import torch
 from functools import reduce
-from optimizer import Optimizer
+
+from .optimizer import Optimizer
 
 
 def _cubic_interpolate(x1, f1, g1, x2, f2, g2, bounds=None):

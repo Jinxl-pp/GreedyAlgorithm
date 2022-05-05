@@ -1,13 +1,14 @@
 import torch
-import line_search as ls
 from functools import reduce
-from optimizer import Optimizer
+
+from .line_search import *
+from .optimizer import Optimizer
 
 class PGD(Optimizer):
     
     def __init__(self,
                  params,
-                 domian,
+                 domain,
                  lr=1,
                  max_iter=20,
                  max_eval=None,
@@ -28,12 +29,12 @@ class PGD(Optimizer):
         super(PGD, self).__init__(params, defaults)
 
         if len(self.param_groups) != 1:
-            raise ValueError("LBFGS doesn't support per-parameter options "
+            raise ValueError("PGD doesn't support per-parameter options "
                         "(parameter groups)")
 
         self._params = self.param_groups[0]['params']
         self._numel_cache = None
-        self._domian = domian
+        self._domain = domain
 
     def _numel(self):
         if self._numel_cache is None:
@@ -75,13 +76,22 @@ class PGD(Optimizer):
         self._set_param(x)
         return loss, flat_grad
 
-    def _box_projection(self, x):
-        numel = len(x)
-        for i in range(numel):
-            if x[i] > self._domian[i][1]:
-                x[i].copy_(self._domian[i][1])
-            elif x[i] < self._domian[i][0]:
-                x[i].copy_(self._domian[i][0])
+    def _directional_evaluate_projected(self, closure, x, t, d):
+        self._add_grad(t, d)
+        self._box_projection()
+        loss = float(closure())
+        flat_grad = self._gather_flat_grad()
+        self._set_param(x)
+        return loss, flat_grad        
+
+    def _box_projection(self):
+        index = 0
+        for p in self._params:
+            if p < self._domain[index][0]:
+                p.copy_(self._domain[index][0])
+            elif p > self._domain[index][1]:
+                p.copy_(self._domain[index][1])
+            index += 1
 
     @torch.no_grad()
     def step(self, closure):
@@ -133,7 +143,7 @@ class PGD(Optimizer):
             d = flat_grad.neg()
 
             # set attempt step for the armijo function
-            s = 0.1
+            s = 1e-1
 
             if prev_flat_grad is None:
                 prev_flat_grad = flat_grad.clone(memory_format=torch.contiguous_format)
@@ -163,42 +173,58 @@ class PGD(Optimizer):
                 if line_search_fn == "strong_wolfe":
                     x_init = self._clone_param()
 
+                    ##
+                    self._add_grad(s, d)
+                    self._box_projection()
+                    d = torch.zeros(len(x_init))
+                    for i in range(len(x_init)):
+                        d[i] = self._params[i] - x_init[i]
+                    self._set_param(x_init)
+                    ##
+
                     def obj_func(x, t, d):
                         return self._directional_evaluate(closure, x, t, d)
 
-                    loss, flat_grad, t, ls_func_evals = ls.strong_wolfe(
+                    loss, flat_grad, t, ls_func_evals = strong_wolfe(
                         obj_func, x_init, t, d, loss, flat_grad, gtd)
+
+                    self._add_grad(t, d)
+                    self._box_projection()
 
                 elif line_search_fn == "armijo":
                     x_init = self._clone_param()
-                    x_proj = x_init.copy()
-                    for i in range(len(x_proj)):
-                        x_proj[i].copy_(x_proj[i]+s*d[i])
-
-                    self._box_projection(x_proj)
-                    d = torch.zeros(len(x_proj))
-                    for i in range(len(x_proj)):
-                        d[i] = x_proj[i] - x_init[i]
+                    self._add_grad(s, d)
+                    self._box_projection()
+                    d = torch.zeros(len(x_init))
+                    for i in range(len(x_init)):
+                        d[i] = self._params[i] - x_init[i]
+                    self._set_param(x_init)
 
                     def obj_func(x, t, d):
                         return self._directional_evaluate(closure, x, t, d)
 
-                    loss, flat_grad, t, ls_func_evals = ls.armijo(
+                    loss, flat_grad, t, ls_func_evals = armijo(
                         obj_func, x_init, d, loss, flat_grad)
+
+                    self._add_grad(t, d)
+                    self._box_projection()
 
                 elif line_search_fn == "arc_armijo":
                     x_init = self._clone_param()
 
                     def obj_func(x, t, d):
-                        return self._directional_evaluate(closure, x, t, d)
+                        return self._directional_evaluate_projected(closure, x, t, d)
 
-                    loss, flat_grad, t, ls_func_evals = ls.arc_armijo(
-                        obj_func, x_init, d, loss, flat_grad, self._box_projection)
+                    loss, flat_grad, t, ls_func_evals = armijo(
+                        obj_func, x_init, d, loss, flat_grad)
+
+                    self._add_grad(t, d)
+                    self._box_projection()
 
                 else:
                     raise RuntimeError("the line search algorithm is not supported")
 
-                self._add_grad(t, d)
+                
                 opt_cond = flat_grad.abs().max() <= tolerance_grad
 
             else:
@@ -218,6 +244,7 @@ class PGD(Optimizer):
             current_evals += ls_func_evals
             state['func_evals'] += ls_func_evals
 
+            print(flat_grad.abs().max())
             ############################################################
             # check conditions
             ############################################################
