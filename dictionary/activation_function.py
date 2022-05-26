@@ -103,7 +103,7 @@ class ActivationFunction():
             for arg in args:
                 self.degree = arg
         
-    def avtivation(self, p):
+    def activation(self, p):
         val_list = {
             "relu": self.ReluPower(self.degree).relu,
             "bspline": self.Bspline(self.degree).bspline,
