@@ -49,7 +49,7 @@ if __name__ == '__main__':
                     line_search_fn="arc_armijo")  # arc_armijo 
 
     optimizer = optimizer_2
-
+    
     epochs = 2000
     pre_loss = 1
     tol_change = 1e-12 #1.0 * np.finfo(float).eps

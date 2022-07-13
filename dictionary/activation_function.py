@@ -72,6 +72,8 @@ class ActivationFunction():
 
         def sigmoid_derivative(self, p, m):
 
+            assert (m >= 1) & (m <= 3) 
+
             def dsigmoid(self, p):
                 val = torch.exp(-p) / (torch.exp(-p) + 1).pow(2)
                 return val
