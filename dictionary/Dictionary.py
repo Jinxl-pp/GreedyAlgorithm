@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn 
 import numpy as np
 from optimization import *
+from abc import ABC
 
 dtype = torch.float64
 torch.set_default_dtype(dtype)
@@ -47,7 +48,15 @@ class BasisFunction(nn.Module):
         val = self.layer(p)
         val = self.activation_function(val)
         return val
+    
 
+class AbstractDictionary(ABC):
+    
+    @abstractmethod
+    def argmaxopt(self, residual_func, quadrature_point):
+        pass
+    
+class NNDict(AbstractDictionary):
 
 class Dictionary(BasisFunction):
     
