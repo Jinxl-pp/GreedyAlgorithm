@@ -53,10 +53,16 @@ class BasisFunction(nn.Module):
 class AbstractDictionary(ABC):
     
     @abstractmethod
-    def argmaxopt(self, residual_func, quadrature_point):
+    def argmaxopt(self, residual_func, quadrature_points):
         pass
     
 class NNDict(AbstractDictionary):
+    
+class AbstractFunc(ABC):
+    
+    @abstractmethod
+    def evaluate(point):
+        pass
 
 class Dictionary(BasisFunction):
     
