@@ -56,6 +56,9 @@ class AbstractDictionary(ABC):
     def argmaxopt(self, Residual_plus_inner_prod, quadrature_points):
         pass
     
+    @abstractmethod
+    def nonlinearargmaxopt(self, ... )
+    
 class NNDict(AbstractDictionary):
     
 class AbstractFunc(ABC):
