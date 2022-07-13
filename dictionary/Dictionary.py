@@ -53,7 +53,7 @@ class BasisFunction(nn.Module):
 class AbstractDictionary(ABC):
     
     @abstractmethod
-    def argmaxopt(self, residual_func, quadrature_points):
+    def argmaxopt(self, PDE_residual, quadrature_points):
         pass
     
 class NNDict(AbstractDictionary):
