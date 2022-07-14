@@ -50,22 +50,22 @@ class BasisFunction(nn.Module):
         return val
     
 
-class AbstractDictionary(ABC):
+# class AbstractDictionary(ABC):
     
-    @abstractmethod
-    def argmaxopt(self, Residual_plus_inner_prod, quadrature_points):
-        pass
+#     @abstractmethod
+#     def argmaxopt(self, Residual_plus_inner_prod, quadrature_points):
+#         pass
     
-    @abstractmethod
-    def nonlinearargmaxopt(self, ... )
+#     @abstractmethod
+#     def nonlinearargmaxopt(self, ... )
     
-class NNDict(AbstractDictionary):
+# class NNDict(AbstractDictionary):
     
-class AbstractFunc(ABC):
+# class AbstractFunc(ABC):
     
-    @abstractmethod
-    def evaluate(point):
-        pass
+#     @abstractmethod
+#     def evaluate(point):
+#         pass
 
 class Dictionary(BasisFunction):
     
