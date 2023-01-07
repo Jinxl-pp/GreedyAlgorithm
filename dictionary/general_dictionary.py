@@ -67,7 +67,7 @@ class BasisFunction(nn.Module):
 #     def evaluate(point):
 #         pass
 
-class Dictionary(BasisFunction):
+class Dictionary(BasisFunction): # shallow_neural_dict
     
     def __init__(self, 
                 base_dim, 
@@ -93,7 +93,6 @@ class Dictionary(BasisFunction):
         super(Dictionary, self).__init__(base_dim, activation_function)
 
         self.base_dim = base_dim
-
         self.pi = np.pi
         self.device = device
         self.optimizer = optimizer

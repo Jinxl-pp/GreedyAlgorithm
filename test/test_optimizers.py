@@ -10,8 +10,13 @@ from torch.nn.parameter import Parameter
 dtype = torch.float64
 torch.set_default_dtype(dtype)
 
-def quadratic(x):
+def quadratic_1(x):
     val = (x[0][0]-0.21).pow(4) + (x[1][0]-0.1).pow(4) + (x[2][0]-0.7001).pow(4)
+    return val
+
+def quadratic_2(x):
+    a = list(x.parameters())
+    val = a[0].pow(4) + a[1].pow(2)
     return val
 
 if __name__ == '__main__':
@@ -59,7 +64,7 @@ if __name__ == '__main__':
         def closure():
             optimizer.zero_grad()
             x = torch.cat([x1,x2,x3],axis=0)
-            loss = quadratic(x)
+            loss = quadratic_1(x)
             loss.backward()
             print('loss: {:.10e}, epoch = {:}'.format(loss.item(), epoch))
             # print(x[0][0].data)

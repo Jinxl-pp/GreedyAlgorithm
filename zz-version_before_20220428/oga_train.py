@@ -262,7 +262,7 @@ def oga_train(eqn_order, num_neuron, quad_info, quad_info_test, activation, pde,
 
     best_k = 20
     domain_b = torch.tensor([[-2.],[2.]])
-    theta_pre = param_mesh(domain_b, h , dim)
+    theta_pre = param_mesh(domain_b, h, dim)
     
     core_mat = torch.zeros(num_neuron, len(pts)).to(device)
     parameters = torch.zeros(num_neuron, dim+1).to(device)
