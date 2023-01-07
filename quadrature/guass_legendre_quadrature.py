@@ -36,6 +36,22 @@ class GaussLegendreDomain():
             self.quadpts = self.quadpts.reshape(D.shape[0],1)
             self.weights = self.weights.reshape(D.shape[0],1) / 2
             
+    def point_quadpts(self, point):
+        """Returns the point itself.
+            INPUT:
+                point: np.array object
+            
+            OUTPUT:
+                quadpts: point
+                weights: 
+        
+        """
+        quadpts = point.astype(np.float64)
+        weights = np.ones_like(quadpts).astype(np.float64)
+        h = np.array([1.], dtype=np.float64)
+        return Quadrature(self.device, quadpts, weights, h)
+        
+            
     def interval_quadpts(self, interval, h):
         """ The Gauss-Lengendre quadrature information on a discretized mesh of 1d interval [a,b].
             Usually the mesh is uniform.
@@ -174,6 +190,9 @@ class GaussLegendreQuadrature(GaussLegendreDomain):
     def __init__(self, index_domian, index_boundary, device):
         super(GaussLegendreQuadrature, self).__init__(index_domian, device)
         self.index = index_boundary
+        
+    def point_quadpts(self, point):
+        return super().point_quadpts(point)
 
     def interval_quadpts(self, interval, h):
         return super().interval_quadpts(interval, h)
