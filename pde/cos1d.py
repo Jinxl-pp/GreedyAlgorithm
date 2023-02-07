@@ -1,14 +1,28 @@
+"""
+Created on Tue Sept 27 23:43 2022
+
+@author: Jin Xianlin (xianlincn@pku.edu.cn)
+@version: 1.0
+@brief: Class of 1d cosine-type functions served as the 
+        real solution to test the approximation of 
+        neural networks. Dimensionality and PDE information
+        are all recorded in the class.
+@modifications: to be added
+"""
+
 import torch
 import numpy as np
+from pde import PDE
 
 pi = np.pi
 # pi = 3.1415926535897932384626
 
-## =====================================
-## 1 dimensional exact solution function
-    
-    
-class DataCos1m1d_DirichletBC:
+
+##=======================================================##
+#            zero Dirichlet boundary condition            #
+##=======================================================##
+
+class DataCos1m1dDirichletBC(PDE):
     """ 2nd order elliptic PDE in 1D:
         \Omega:    (-1,1)
              m:    1
@@ -17,7 +31,18 @@ class DataCos1m1d_DirichletBC:
     """
     
     def __init__(self):
-        pass
+        """
+        dim: the dimensionality of data
+        order: the order of partial differential equation
+        """
+        self.dim = 1
+        self.order = 2
+
+    def dimension(self):
+        return self.dim
+    
+    def equation_order(self):
+        return self.order
 
     def solution(self, p):
         """ The exact solution of the PDE
@@ -43,7 +68,11 @@ class DataCos1m1d_DirichletBC:
         return val
 
 
-class DataCos1m1d_NeumannBC:
+##=====================================================##
+#            zero Neumann boundary condition            #
+##=====================================================##
+
+class DataCos1m1dNeumannBC(PDE):
     """ 2nd order elliptic PDE in 1D:
         \Omega:    (-1,1)
              m:    1
@@ -52,7 +81,18 @@ class DataCos1m1d_NeumannBC:
     """
 
     def __init__(self):
-        pass
+        """
+        dim: the dimensionality of data
+        order: the order of partial differential equation
+        """
+        self.dim = 1
+        self.order = 2
+
+    def dimension(self):
+        return self.dim
+    
+    def equation_order(self):
+        return self.order
     
     def solution(self, p):
         """ The exact solution of the PDE

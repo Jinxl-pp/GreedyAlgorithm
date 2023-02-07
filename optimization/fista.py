@@ -8,7 +8,7 @@ from .optimizer import Optimizer
 class FISTA(Optimizer):
     """
     The Nesterov version of projected gradient method.
-    Nesterov: a speeded up first order optimization method.
+    Nesterov: a speed-up first order optimization method.
     """
     def __init__(self,
                  params,

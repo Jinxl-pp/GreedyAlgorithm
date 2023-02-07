@@ -21,7 +21,7 @@ def quadratic_2(x):
 
 if __name__ == '__main__':
 
-    domain = torch.tensor([[0.2,3],[0.1,3],[0.7,3]])
+    domain = torch.tensor([[0.22,3],[0.1,3],[0.7,3]])
     
     x1 = torch.tensor([[-2.2135]])
     x1 = Parameter(x1)
@@ -67,9 +67,9 @@ if __name__ == '__main__':
             loss = quadratic_1(x)
             loss.backward()
             print('loss: {:.10e}, epoch = {:}'.format(loss.item(), epoch))
-            # print(x[0][0].data)
-            # print(x[1][0].data)
-            # print(x[2][0].data)
+            print(x[0][0].data)
+            print(x[1][0].data)
+            print(x[2][0].data)
             return loss
         
         optimizer.step(closure)
