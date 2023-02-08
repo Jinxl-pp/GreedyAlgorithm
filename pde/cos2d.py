@@ -1,7 +1,7 @@
 """
 Created on Tue Sept 27 23:55 2022
 
-@author: Jinpp (xianlincn@pku.edu.cn)
+@author: Jin Xianlins (xianlincn@pku.edu.cn)
 @version: 1.0
 @brief: Class of 2d cosine-type functions served as the 
         real solution to test the approximation of 
@@ -83,8 +83,8 @@ class DataCos1m2dDirichletBC(PDE):
 
         pi = np.pi
         val = torch.zeros_like(p)
-        val[..., 1] = self.dx_solution(p)
-        val[..., 2] = self.dy_solution(p)
+        val[..., 0:1] = self.dx_solution(p)
+        val[..., 1:2] = self.dy_solution(p)
         return val
 
     def dirichlet(self, p):
@@ -171,8 +171,8 @@ class DataCos1m2dNeumannBC(PDE):
 
         pi = np.pi
         val = torch.zeros_like(p)
-        val[..., 1] = self.dx_solution(p)
-        val[..., 2] = self.dy_solution(p)
+        val[..., 0:1] = self.dx_solution(p)
+        val[..., 1:2] = self.dy_solution(p)
         return val
 
     def source(self, p):

@@ -81,8 +81,8 @@ class DataPoly2m2dNeumannBC(PDE):
 
         pi = np.pi
         val = torch.zeros_like(p)
-        val[..., 1] = self.dx_solution(p)
-        val[..., 2] = self.dy_solution(p)
+        val[..., 0:1] = self.dx_solution(p)
+        val[..., 1:2] = self.dy_solution(p)
         return val
 
     def dxx_solution(self, p):
@@ -120,15 +120,15 @@ class DataPoly2m2dNeumannBC(PDE):
                48*y.pow(2)*(x.pow(2) - 1).pow(4)*(y.pow(2) - 1).pow(2)
         return val
 
-    def D2_gradient(self, p):
+    def hessian(self, p):
         """ All the 2nd derivatives of the exact solution 
         """
 
         pi = np.pi
         val = torch.zeros_like(p)
-        val[..., 1] = self.dxx_solution(p)
-        val[..., 2] = self.dxy_solution(p)
-        val[..., 3] = self.dyy_solution(p)
+        val[..., 0:1] = self.dxx_solution(p)
+        val[..., 1:2] = self.dxy_solution(p)
+        val[..., 2:3] = self.dyy_solution(p)
         return val
 
     def source(self, p):

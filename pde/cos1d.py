@@ -14,7 +14,6 @@ import torch
 import numpy as np
 from pde import PDE
 
-pi = np.pi
 # pi = 3.1415926535897932384626
 
 
@@ -50,6 +49,7 @@ class DataCos1m1dDirichletBC(PDE):
                 p: tensor object, 
         """
 
+        pi = np.pi
         val = torch.cos(pi/2*p)
         return val
     
@@ -57,6 +57,7 @@ class DataCos1m1dDirichletBC(PDE):
         """ The gradient of the exact solution 
         """
 
+        pi = np.pi
         val = -pi/2*torch.sin(pi/2*p)
         return val
     
@@ -64,6 +65,7 @@ class DataCos1m1dDirichletBC(PDE):
         """ The right-hand-side term of the PDE
         """
 
+        pi = np.pi
         val = pi**2/4 * torch.cos(pi/2*p) + torch.cos(pi/2*p)
         return val
 
@@ -99,6 +101,8 @@ class DataCos1m1dNeumannBC(PDE):
             INPUT:
                 p: tensor object, 
         """
+
+        pi = np.pi
         val = torch.cos(pi*p)
         return val
     
@@ -106,6 +110,7 @@ class DataCos1m1dNeumannBC(PDE):
         """ The gradient of the exact solution 
         """
 
+        pi = np.pi
         val = -pi*torch.sin(pi*p)
         return val
     
@@ -113,5 +118,6 @@ class DataCos1m1dNeumannBC(PDE):
         """ The right-hand-side term of the PDE
         """
 
+        pi = np.pi
         val = pi**2 * torch.cos(pi*p) + torch.cos(pi*p)
         return val

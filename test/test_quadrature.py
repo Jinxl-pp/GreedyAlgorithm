@@ -64,6 +64,7 @@ if __name__ == '__main__':
     # 1D G-L quadrature test
     nsamples = 1000
     h = 1 / nsamples
+    h = np.array([h])
     integral = real_integral(1)
     func = integral.get('func')
     value = integral.get('value')
