@@ -17,8 +17,9 @@ from pde import PDE
 
 # pi = 3.1415926535897932384626
 
-## =====================================
-## 3 dimensional exact solution function     
+##=====================================================##
+#            zero Neumann boundary condition            #
+##=====================================================##   
     
 class DataCos1m3d_NeumannBC:
     """ 2nd order elliptic PDE in 3D:

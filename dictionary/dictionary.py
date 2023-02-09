@@ -1,21 +1,20 @@
 """
-Created on Tue Dec 13 22:10 2022
+Created on Thur Feb 09 11:23 2023
 
 @author: Jin Xianlin (xianlincn@pku.edu.cn)
 @version: 1.0
-@brief: An abstract class(method) built for PDE data
-        used in training neural networks.
+@brief: An abstract class(method) describing dictionaries,
+        a collection of single neuron (basis function).
 @modifications: to be added
 """
 
 from abc import ABC, abstractmethod
 
-
 ##=============================================##
 #            an abstract basic class            #
 ##=============================================##
 
-class PDE(ABC):  
+class AbstractDictionary(ABC):
     """
     @abstractmethod: abstract method, class with this decorator cannot 
                      be instantiated. A subclass who inherits the class
@@ -23,22 +22,14 @@ class PDE(ABC):
     """
     
     @abstractmethod
-    def dimension(self):
-        return self.dim
-        
-    @abstractmethod
-    def equation_order(self):
-        return self.order
-        
-    @abstractmethod
-    def solution(self, p):
-        return 
+    def select_initial_element(self, energy):
+        pass
     
     @abstractmethod
-    def gradient(self, p):
-        return 
+    def argmax_optimize(self, energy, op_type):
+        pass
     
     @abstractmethod
-    def source(self, p):
-        return
-        
+    def find_optimal_element(self):
+        pass
+    
