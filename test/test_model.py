@@ -28,7 +28,7 @@ def _polar_to_cartesian(dim, theta):
         return (w1, w2, w3, b)
     else:
         raise RuntimeError("Dimension error.")
-        
+    
 
 if __name__ == '__main__':
     
@@ -96,3 +96,9 @@ if __name__ == '__main__':
     index = a.argmax()
     print(index)
     print(a[index])
+    
+    #
+    a = np.zeros((2,3))
+    print(a[0,...])
+    a[...,0] = np.array([2,3])
+    print(a)
