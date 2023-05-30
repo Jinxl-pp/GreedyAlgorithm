@@ -32,13 +32,13 @@ class PDE(ABC):
         
     @abstractmethod
     def solution(self, p):
-        return 
+        pass 
     
     @abstractmethod
     def gradient(self, p):
-        return 
+        pass 
     
     @abstractmethod
     def source(self, p):
-        return
+        pass
         

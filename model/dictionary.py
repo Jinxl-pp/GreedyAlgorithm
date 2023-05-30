@@ -22,11 +22,11 @@ class AbstractDictionary(ABC):
     """
     
     @abstractmethod
-    def select_initial_element(self, energy):
+    def _select_initial_elements(self, pde_energy):
         pass
     
     @abstractmethod
-    def argmax_optimize(self, energy, op_type):
+    def _argmax_optimize(self, pde_energy, opt_type):
         pass
     
     @abstractmethod

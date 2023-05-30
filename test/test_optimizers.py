@@ -4,8 +4,9 @@ sys.path.append('../')
 import time
 import torch
 import numpy as np
-from optimization import *
 from torch.nn.parameter import Parameter
+
+from optimization import *
 
 dtype = torch.float64
 torch.set_default_dtype(dtype)
@@ -32,8 +33,15 @@ if __name__ == '__main__':
     x3 = torch.tensor([[-0.5273]])
     x3 = Parameter(x3)
 
+    param_list = [x1,x2,x3]
+    
+    x4 = torch.tensor([[1.]])
+    ppp = (x1,x2,x3,x4)
+    print("param_list!!!!!")
+    print(ppp)
+    
     learning_rate = 1
-    optimizer_1 = PGD([x1,x2,x3],#x.parameters(),
+    optimizer_1 = PGD(param_list,#x.parameters(),
                     domain,
                     lr=learning_rate,
                     max_iter=20,
@@ -43,7 +51,7 @@ if __name__ == '__main__':
                     history_size=100,
                     line_search_fn="armijo")  # arc_armijo > strong_wolfe > armijo
 
-    optimizer_2 = FISTA([x1,x2,x3],#x.parameters(),
+    optimizer_2 = FISTA(param_list,#x.parameters(),
                     domain,
                     lr=learning_rate,
                     max_iter=20,
@@ -81,4 +89,7 @@ if __name__ == '__main__':
         
     elapsed = time.time() - start_time                
     print('Training time: %.4f' % (elapsed))
+    print("param_list!!!!!")
+    print(ppp)
+    print(ppp[0])
 

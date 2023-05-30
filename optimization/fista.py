@@ -199,7 +199,7 @@ class FISTA(Optimizer):
                     self._box_projection()
 
                 else:
-                    raise RuntimeError("only arc-Armijo line search is not supported")
+                    raise RuntimeError("only arc-Armijo line search is supported")
 
                 
                 opt_cond = flat_grad.abs().max() <= tolerance_grad

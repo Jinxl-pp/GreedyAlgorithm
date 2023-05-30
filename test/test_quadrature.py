@@ -54,6 +54,56 @@ def real_integral(case):
     return integral.get(case)
 
 
+def show_error_GL(sampling, h, case):
+    
+    integral = real_integral(case)
+    func = integral.get('func')
+    value = integral.get('value')
+    domain = integral.get('domain')
+    
+    start_0 = time.time()
+    data = sampling(domain, h)
+    end_0 = time.time()
+    
+    start_1 = time.time()
+    funeval = func(data.quadpts)
+    end_1 = time.time()
+    
+    start_2 = time.time()
+    value_num = torch.dot(funeval, data.weights) * data.area
+    end_2 = time.time()
+    
+    print('{:d}D G-L quadrature error = {:.6e}'.format(case, rerror(value_num, value)))
+    print('generation time = {:.6f}s'.format(end_0 - start_0))
+    print('evaluation time = {:.6f}s'.format(end_1 - start_1))
+    print('qudrature time = {:.6f}s'.format(end_2 - start_2))
+    
+
+def show_error_MC(sampling, nsamples, case):
+    
+    integral = real_integral(case)
+    func = integral.get('func')
+    value = integral.get('value')
+    domain = integral.get('domain')
+    
+    start_0 = time.time()
+    data = sampling(domain, nsamples)
+    end_0 = time.time()
+    
+    start_1 = time.time()
+    funeval = func(data.quadpts)
+    end_1 = time.time()
+    
+    start_2 = time.time()
+    value_num = torch.dot(funeval, data.weights) * data.area
+    end_2 = time.time()
+    
+    print('{:d}D M-C quadrature error = {:.6e}'.format(case, rerror(value_num, value)))
+    print('generation time = {:.6f}s'.format(end_0 - start_0))
+    print('evaluation time = {:.6f}s'.format(end_1 - start_1))
+    print('qudrature time = {:.6f}s'.format(end_2 - start_2))
+
+
 
 if __name__ == '__main__':
     
@@ -62,88 +112,43 @@ if __name__ == '__main__':
     mc_quad = mc.MonteCarloDomain(device)
     
     # 1D G-L quadrature test
-    nsamples = 1000
-    h = 1 / nsamples
-    h = np.array([h])
-    integral = real_integral(1)
-    func = integral.get('func')
-    value = integral.get('value')
-    domain = integral.get('domain')
-    
-    start_0 = time.time()
-    data = gl_quad.interval_quadpts(domain, h)
-    end_0 = time.time()
-    
-    start_1 = time.time()
-    funeval = func(data.quadpts)
-    end_1 = time.time()
-    
-    start_2 = time.time()
-    value_num = torch.dot(funeval, data.weights) * torch.prod(data.h)
-    end_2 = time.time()
-    
-    print(rerror(value_num, value))
-    print('generation time = {:.6f}s'.format(end_0 - start_0))
-    print('evaluation time = {:.6f}s'.format(end_1 - start_1))
-    print('qudrature time = {:.6f}s'.format(end_2 - start_2))
+    case = 1
+    N = 1000
+    h = np.array([1/N])
+    sampling = gl_quad.interval_quadpts
+    show_error_GL(sampling, h, case)
     
     # 2D G-L quadrature test
-    nsamples = 100
-    h = 1 / nsamples
-    h = np.array([h,h])
-    integral = real_integral(2)
-    func = integral.get('func')
-    value = integral.get('value')
-    domain = integral.get('domain')
-    
-    start_0 = time.time()
-    data = gl_quad.rectangle_quadpts(domain, h)
-    end_0 = time.time()
-    
-    start_1 = time.time()
-    funeval = func(data.quadpts)
-    end_1 = time.time()
-    
-    start_2 = time.time()
-    value_num = torch.dot(funeval, data.weights) * torch.prod(data.h)
-    end_2 = time.time()
-    
-    print(rerror(value_num, value))
-    print('generation time = {:.6f}s'.format(end_0 - start_0))
-    print('evaluation time = {:.6f}s'.format(end_1 - start_1))
-    print('qudrature time = {:.6f}s'.format(end_2 - start_2))
+    case = 2
+    N = 400
+    h = np.array([1/N, 1/N])
+    sampling = gl_quad.rectangle_quadpts
+    show_error_GL(sampling, h, case)
     
     # 3D G-L quadrature test
-    nsamples = 100
-    h = 1 / nsamples
-    h = np.array([h,h,h])
-    integral = real_integral(3)
-    func = integral.get('func')
-    value = integral.get('value')
-    domain = integral.get('domain')
-    
-    start_0 = time.time()
-    data = gl_quad.cuboid_quadpts(domain, h)
-    end_0 = time.time()
-    
-    start_1 = time.time()
-    funeval = func(data.quadpts)
-    end_1 = time.time()
-    
-    start_2 = time.time()
-    value_num = torch.dot(funeval, data.weights) * torch.prod(data.h)
-    end_2 = time.time()
-    
-    print(rerror(value_num, value))
-    print('generation time = {:.6f}s'.format(end_0 - start_0))
-    print('evaluation time = {:.6f}s'.format(end_1 - start_1))
-    print('qudrature time = {:.6f}s'.format(end_2 - start_2))
+    case = 3
+    N = 100
+    h = np.array([1/N, 1/N, 1/N])
+    sampling = gl_quad.cuboid_quadpts
+    show_error_GL(sampling, h, case)
     
     # 1D M-C quadrature test
+    case = 1
+    nsamples = 100000000
+    sampling = mc_quad.interval_samples
+    show_error_MC(sampling, nsamples, case)
     
     # 2D M-C quadrature test
-    
+    case = 2
+    nsamples = 100000000
+    sampling = mc_quad.rectangle_samples
+    show_error_MC(sampling, nsamples, case)
+
     # 3D M-C quadrature test
+    case = 3
+    nsamples = 100000000
+    sampling = mc_quad.cuboid_samples
+    show_error_MC(sampling, nsamples, case)
     
     # 2D M-C quadrature test on circle
     

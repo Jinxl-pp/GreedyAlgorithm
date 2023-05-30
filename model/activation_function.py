@@ -37,7 +37,7 @@ class ActivationFunction():
             self.degree = degree
             self.weight = torch.zeros(degree+2)
             for i in range(degree+2):
-                weight = 0
+                weight = 1
                 for j in range(degree+2):
                     if j != i:
                         weight *= 1/(i-j)
@@ -101,6 +101,7 @@ class ActivationFunction():
     def __init__(self, ftype, *args) -> None:
         super().__init__()
         self.ftype = ftype
+        self.degree = 0
         if self.ftype != "sigmoid":
             for arg in args:
                 self.degree = arg

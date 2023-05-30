@@ -20,7 +20,7 @@ class MonteCarloDomain():
         measure = interval[0][1] - interval[0][0]
         quadpts = interval[0][0] + np.random.rand(number_of_samples, 1) * measure
         quadpts = quadpts.astype(np.float64)
-        weights = np.array([[measure]], dtype=np.float64)
+        weights = measure * np.ones_like(quadpts).astype(np.float64) 
         h = np.array([1 / number_of_samples])
         return Quadrature(self.device, quadpts, weights, h)
 
@@ -38,7 +38,7 @@ class MonteCarloDomain():
         quadpts_y = quadpts_y.astype(np.float64)
 
         quadpts = np.concatenate((quadpts_x, quadpts_y), axis=1)
-        weights = np.array([[measure]], dtype=np.float64)
+        weights = measure * np.ones_like(quadpts).astype(np.float64) 
         h = np.array([1 / number_of_samples])
 
         return Quadrature(self.device, quadpts, weights, h)        
@@ -60,7 +60,7 @@ class MonteCarloDomain():
         quadpts_z = quadpts_z.astype(np.float64)
 
         quadpts = np.concatenate((quadpts_x, quadpts_y, quadpts_z), axis=1)
-        weights = np.array([[measure]], dtype=np.float64)
+        weights = measure * np.ones_like(quadpts).astype(np.float64) 
         h = np.array([1 / number_of_samples])
         
         return Quadrature(self.device, quadpts, weights, h)      
@@ -82,7 +82,7 @@ class MonteCarloDomain():
         quadpts_y = quadpts_radius * np.sin(quadpts_theta) + center[1]
 
         quadpts = np.concatenate((quadpts_x, quadpts_y), axis=1).astype(np.float64)
-        weights = np.array([[measure]], dtype=np.float64)
+        weights = measure * np.ones_like(quadpts).astype(np.float64) 
         h = np.array([1 / number_of_samples])
  
         return Quadrature(self.device, quadpts, weights, h)
@@ -109,7 +109,7 @@ class MonteCarloDomain():
         quadpts_z = quadpts_radius * np.sin(quadpts_theta) + center[2]
 
         quadpts = np.concatenate((quadpts_x, quadpts_y, quadpts_z), axis=1).astype(np.float64)
-        weights = np.array([[measure]], dtype=np.float64)
+        weights = measure * np.ones_like(quadpts).astype(np.float64) 
         h = np.array([1 / number_of_samples])
         return Quadrature(self.device, quadpts, weights, h)        
 
