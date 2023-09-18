@@ -4,8 +4,8 @@ sys.path.append('../')
 import torch
 import numpy as np
 from torch.nn.parameter import Parameter
-from model import activation_function as af
-from model import shallownet as sn
+from greedy.model import activation_function as af
+from greedy.model import shallownet as sn
 
 
 def _polar_to_cartesian(dim, theta):

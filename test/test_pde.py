@@ -4,8 +4,8 @@ sys.path.append('../')
 import torch
 import numpy as np
 
-from quadrature import gauss_legendre_quadrature as gl
-from pde import cos1d, cos2d, poly2d, cos3d
+from greedy.quadrature import gauss_legendre_quadrature as gl
+from greedy.pde import cos1d, cos2d, poly2d, cos3d
 
 # device settings
 use_gpu = torch.cuda.is_available()

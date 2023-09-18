@@ -4,9 +4,10 @@ sys.path.append('../')
 import time
 import torch
 import numpy as np
-from quadrature import monte_carlo_quadrature as mc
-from quadrature import gauss_legendre_quadrature as gl
-from quadrature import quasi_monte_carlo_quadrature as qmc
+
+from greedy.quadrature import monte_carlo_quadrature as mc
+from greedy.quadrature import gauss_legendre_quadrature as gl
+from greedy.quadrature import quasi_monte_carlo_quadrature as qmc
 
 # precision settings
 torch.set_printoptions(precision=6)
@@ -26,18 +27,18 @@ def rerror(a,b):
     return np.abs(a-b) / np.abs(b)
 
 def func_1d(x):
-    x = x[:,0]
+    x = x[:,0].reshape(-1,1)
     return torch.cos(3.5*pi*x)
 
 def func_2d(x):
-    x1 = x[:,0]#.reshape(-1,1)
-    x2 = x[:,1]#.reshape(-1,1)
+    x1 = x[:,0].reshape(-1,1)
+    x2 = x[:,1].reshape(-1,1)
     return torch.cos(3.5*pi*x1) * torch.cos(3.5*pi*x2)
 
 def func_3d(x):
-    x1 = x[:,0]#.reshape(-1,1)
-    x2 = x[:,1]#.reshape(-1,1)
-    x3 = x[:,2]#.reshape(-1,1)
+    x1 = x[:,0].reshape(-1,1)
+    x2 = x[:,1].reshape(-1,1)
+    x3 = x[:,2].reshape(-1,1)
     return torch.cos(3.5*pi*x1) * torch.cos(3.5*pi*x2) * torch.cos(3.5*pi*x3)
 
 def func_one(x):
@@ -67,16 +68,18 @@ def show_error_GL(sampling, h, case):
     
     start_1 = time.time()
     funeval = func(data.quadpts)
+    print(data.quadpts.shape[0])
     end_1 = time.time()
     
     start_2 = time.time()
-    value_num = torch.dot(funeval, data.weights) * data.area
+    value_num = torch.sum(funeval * data.weights) * data.area
     end_2 = time.time()
     
     print('{:d}D G-L quadrature error = {:.6e}'.format(case, rerror(value_num, value)))
     print('generation time = {:.6f}s'.format(end_0 - start_0))
     print('evaluation time = {:.6f}s'.format(end_1 - start_1))
-    print('qudrature time = {:.6f}s'.format(end_2 - start_2))
+    print('quadrature time = {:.6f}s'.format(end_2 - start_2))
+    print('number of samples = {:d}'.format(data.quadpts.shape[0]))
     
 
 def show_error_MC(sampling, nsamples, case):
@@ -95,13 +98,14 @@ def show_error_MC(sampling, nsamples, case):
     end_1 = time.time()
     
     start_2 = time.time()
-    value_num = torch.dot(funeval, data.weights) * data.area
+    value_num = torch.sum(funeval * data.weights) * data.area
     end_2 = time.time()
     
     print('{:d}D M-C quadrature error = {:.6e}'.format(case, rerror(value_num, value)))
     print('generation time = {:.6f}s'.format(end_0 - start_0))
     print('evaluation time = {:.6f}s'.format(end_1 - start_1))
     print('qudrature time = {:.6f}s'.format(end_2 - start_2))
+    print('number of samples = {:d}'.format(data.quadpts.shape[0]))
     
     
 def show_error_QMC(sampling, nsamples, case):
@@ -120,13 +124,14 @@ def show_error_QMC(sampling, nsamples, case):
     end_1 = time.time()
     
     start_2 = time.time()
-    value_num = torch.dot(funeval, data.weights) * data.area
+    value_num = torch.sum(funeval * data.weights) * data.area
     end_2 = time.time()
     
     print('{:d}D Q-M-C quadrature error = {:.6e}'.format(case, rerror(value_num, value)))
     print('generation time = {:.6f}s'.format(end_0 - start_0))
     print('evaluation time = {:.6f}s'.format(end_1 - start_1))
     print('qudrature time = {:.6f}s'.format(end_2 - start_2))
+    print('number of samples = {:d}'.format(data.quadpts.shape[0]))
 
 
 
@@ -137,62 +142,62 @@ if __name__ == '__main__':
     gl_quad = gl.GaussLegendreDomain(index, device)
     qmc_quad = qmc.QuasiMonteCarloQuadrature(device)
     
-    # 1D G-L quadrature test
-    case = 1
-    N = 1000
-    h = np.array([1/N])
-    sampling = gl_quad.interval_quadpts
-    show_error_GL(sampling, h, case)
+    # # 1D G-L quadrature test
+    # case = 1
+    # N = 1000
+    # h = np.array([1/N])
+    # sampling = gl_quad.interval_quadpts
+    # show_error_GL(sampling, h, case)
     
-    # 2D G-L quadrature test
-    case = 2
-    N = 400
-    h = np.array([1/N, 1/N])
-    sampling = gl_quad.rectangle_quadpts
-    show_error_GL(sampling, h, case)
+    # # 2D G-L quadrature test
+    # case = 2
+    # N = 400
+    # h = np.array([1/N, 1/N])
+    # sampling = gl_quad.rectangle_quadpts
+    # show_error_GL(sampling, h, case)
     
-    # 3D G-L quadrature test
-    case = 3
-    N = 100
-    h = np.array([1/N, 1/N, 1/N])
-    sampling = gl_quad.cuboid_quadpts
-    show_error_GL(sampling, h, case)
+    # # 3D G-L quadrature test
+    # case = 3
+    # N = 100
+    # h = np.array([1/N, 1/N, 1/N])
+    # sampling = gl_quad.cuboid_quadpts
+    # show_error_GL(sampling, h, case)
     
-    # 1D M-C quadrature test
-    case = 1
-    nsamples = int(1e+8)
-    sampling = mc_quad.interval_samples
-    show_error_MC(sampling, nsamples, case)
+    # # 1D M-C quadrature test
+    # case = 1
+    # nsamples = int(1e+8)
+    # sampling = mc_quad.interval_samples
+    # show_error_MC(sampling, nsamples, case)
     
-    # 2D M-C quadrature test
-    case = 2
-    nsamples = int(1e+8)
-    sampling = mc_quad.rectangle_samples
-    show_error_MC(sampling, nsamples, case)
+    # # 2D M-C quadrature test
+    # case = 2
+    # nsamples = int(1e+8)
+    # sampling = mc_quad.rectangle_samples
+    # show_error_MC(sampling, nsamples, case)
 
-    # 3D M-C quadrature test
-    case = 3
-    nsamples = int(1e+8)
-    sampling = mc_quad.cuboid_samples
-    show_error_MC(sampling, nsamples, case)
+    # # 3D M-C quadrature test
+    # case = 3
+    # nsamples = int(1e+8)
+    # sampling = mc_quad.cuboid_samples
+    # show_error_MC(sampling, nsamples, case)
     
-    # 1D Q-M-C quadrature test
-    case = 1
-    nsamples = int(1e+6)
-    sampling = qmc_quad.n_rectangle_samples
-    show_error_QMC(sampling, nsamples, case)
+    # # 1D Q-M-C quadrature test
+    # case = 1
+    # nsamples = int(1e+6)
+    # sampling = qmc_quad.n_rectangle_samples
+    # show_error_QMC(sampling, nsamples, case)
     
-    # 2D Q-M-C quadrature test
-    case = 2
-    nsamples = int(1e+6)
-    sampling = qmc_quad.n_rectangle_samples
-    show_error_QMC(sampling, nsamples, case)
+    # # 2D Q-M-C quadrature test
+    # case = 2
+    # nsamples = int(1e+6)
+    # sampling = qmc_quad.n_rectangle_samples
+    # show_error_QMC(sampling, nsamples, case)
     
-    # 3D Q-M-C quadrature test
-    case = 3
-    nsamples = int(1e+6)
-    sampling = qmc_quad.n_rectangle_samples
-    show_error_QMC(sampling, nsamples, case)
+    # # 3D Q-M-C quadrature test
+    # case = 3
+    # nsamples = int(1e+6)
+    # sampling = qmc_quad.n_rectangle_samples
+    # show_error_QMC(sampling, nsamples, case)
     
     # 2D M-C quadrature test on circle
     

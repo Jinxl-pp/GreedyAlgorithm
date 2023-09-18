@@ -4,13 +4,13 @@ sys.path.append('../')
 import torch
 import matplotlib.pyplot as plt
 
-from model import activation_function as af 
+from greedy.model import activation_function as af 
 
 def show_model(sigma):
     
     # define samples and evaluations
     samples = torch.linspace(-5, 5, 1000)
-    f_data = sigma.activation(samples)
+    f_data = sigma.activate(samples)
     
     # plot the shape of model
     plt.plot(samples, f_data, label="activation", color="red", linewidth=1)

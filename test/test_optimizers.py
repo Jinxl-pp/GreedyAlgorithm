@@ -6,7 +6,7 @@ import torch
 import numpy as np
 from torch.nn.parameter import Parameter
 
-from optimization import *
+from greedy.optimization import *
 
 dtype = torch.float64
 torch.set_default_dtype(dtype)
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     print("param_list!!!!!")
     print(ppp)
     
-    learning_rate = 1
+    learning_rate = 1e-2
     optimizer_1 = PGD(param_list,#x.parameters(),
                     domain,
                     lr=learning_rate,
@@ -49,7 +49,7 @@ if __name__ == '__main__':
                     tolerance_grad=1e-08,
                     tolerance_change=np.finfo(float).eps,
                     history_size=100,
-                    line_search_fn="armijo")  # arc_armijo > strong_wolfe > armijo
+                    line_search_fn="arc_armijo")  # arc_armijo > strong_wolfe > armijo
 
     optimizer_2 = FISTA(param_list,#x.parameters(),
                     domain,
@@ -61,7 +61,7 @@ if __name__ == '__main__':
                     history_size=100,
                     line_search_fn="arc_armijo")  # arc_armijo 
 
-    optimizer = optimizer_2
+    optimizer = optimizer_1
     
     epochs = 2000
     pre_loss = 1
