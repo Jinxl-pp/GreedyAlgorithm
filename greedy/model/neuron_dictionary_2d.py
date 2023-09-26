@@ -1,13 +1,11 @@
-import sys
-sys.path.append('../')
-
+import time
 import torch
 import torch.nn as nn 
 from torch.nn.parameter import Parameter
 import numpy as np
 
-import dictionary as dt
-from optimization import generator as gen
+from . import dictionary as dt
+from ..optimization import generator as gen
 
 dtype = torch.float64
 torch.set_default_dtype(dtype)
@@ -15,7 +13,7 @@ torch.set_default_dtype(dtype)
 ## =====================================
 ## general SNN dictionary
 
-class SNNDictionary2D(dt.AbstractDictionary): # shallow_neural_dict with 2D inputs
+class NeuronDictionary2D(dt.AbstractDictionary): # shallow_neural_dict with 2D inputs
     
     def __init__(self, 
                 activation,
@@ -27,11 +25,13 @@ class SNNDictionary2D(dt.AbstractDictionary): # shallow_neural_dict with 2D inpu
 
         """
         The STANDARD general dictionary for shallow neural networks,
-                { \sigma(w*x + b): (w, b) \in R^{d+1} }
+                { \sigma(w*x + b): (w, b) \in R^{3} }
         INPUT:
             geo_dim: the dimension of the background space R^d.
-            activationn: the object for nonlinear activation functions.
+            activation: nonlinear activation functions.
             optimizer: training algorithms for the argmax-subproblem.
+                        if self.optimizer = False, then set best_k=1 in 
+                        self._select_initial_elements().
             params_domain: torch.tensor object, for b only.
                             shape = 1-by-2,
             params_mesh_size: a dict object, 
@@ -39,7 +39,7 @@ class SNNDictionary2D(dt.AbstractDictionary): # shallow_neural_dict with 2D inpu
             device: cpu or cuda.
             parallel_search: option for parallel optimization.
         """
-        super(SNNDictionary, self).__init__()
+        super(NeuronDictionary2D, self).__init__()
         
         self.geo_dim = 2
         self.pi = np.pi
@@ -47,7 +47,7 @@ class SNNDictionary2D(dt.AbstractDictionary): # shallow_neural_dict with 2D inpu
         self.activation = activation
         self.optimizer = optimizer
         self.params_domain = self._get_domain(param_b_domain)
-        self.param_mesh_size = param_mesh_size
+        self.params_mesh_size = params_mesh_size
         
         self.device = device
         self.parallel_search = parallel_search
@@ -89,19 +89,16 @@ class SNNDictionary2D(dt.AbstractDictionary): # shallow_neural_dict with 2D inpu
         max_val_b = self.params_domain[1][1]
         
         # generate param-mesh for (w1,w2,b), where w1 = cos(t), w2 = sin(phi)
-        N1 = (max_val_t - min_val_t) / self.param_mesh_size
-        N2 = (max_val_b - min_val_b) / self.param_mesh_size
+        N1 = (max_val_t - min_val_t) / self.params_mesh_size
+        N2 = (max_val_b - min_val_b) / self.params_mesh_size
         N1 = int(N1) + 1 
         N2 = int(N2) + 1
         t = torch.linspace(min_val_t, max_val_t, N1).to(self.device)
         b = torch.linspace(min_val_b, max_val_b, N2).to(self.device)
-        theta = torch.meshgrid(t, b)
+        theta = torch.meshgrid(t, b, indexing="ij")
         
         param = self._polar_to_cartesian(theta)
         return theta, param
-        
-        
-    # def _get_bilinear??
             
 
     def _select_initial_elements(self, pde_energy, best_k):
@@ -109,10 +106,8 @@ class SNNDictionary2D(dt.AbstractDictionary): # shallow_neural_dict with 2D inpu
         # generate parameter-samples from a fine grid, and 
         # select the top ones by evaluate them in the pde_energy
         all_theta, all_param = self._gather_vertical_param()
-        param_shape = theta[0].shape
+        param_shape = all_theta[0].shape
         
-        # we should modify here 
-        # pde_energy should contain assert-language to avoid dimensionlaity inconsistency
         # only index[0] or some top-k indices
         all_init_loss = pde_energy(all_param)
         _, index = torch.sort(all_init_loss, descending=False, dim=0)
@@ -147,11 +142,13 @@ class SNNDictionary2D(dt.AbstractDictionary): # shallow_neural_dict with 2D inpu
         
         # get the number of parameter sets 
         num_search = theta_list.shape[0]
+        theta_updated = torch.zeros(num_search, 2)
         evaluate_list = torch.zeros(num_search, 1)
         
         # train parameters of each set and evaluate their ultimate energy
-        epochs = 100
+        epochs = 10
         for i in range(num_search): 
+            print(' training the {:.0f}-th candidate'.format(i+1))
             theta, optimizer = self._get_optimizer(theta_list[i,...], optimizer_type)
             for epoch in range(epochs):
                 def closure():
@@ -159,14 +156,16 @@ class SNNDictionary2D(dt.AbstractDictionary): # shallow_neural_dict with 2D inpu
                     param = self._polar_to_cartesian(theta)
                     loss = pde_energy(param)
                     loss.backward()
+                    # print('loss: {:.16e}, epoch = {:}'.format(loss.item(), epoch))
                     return loss
                 optimizer.step(closure)
+                # print('loss: {:.10e}, epoch = {:}'.format(closure().item(), epoch))
                 new_loss = closure().detach()
-            theta_list[i,0] = theta[0]
-            theta_list[i,1] = theta[1]
+            theta_updated[i,0] = theta[0]
+            theta_updated[i,1] = theta[1]
             evaluate_list[i] = new_loss
         
-        return theta_list, evaluate_list            
+        return theta_updated, evaluate_list            
             
     
     def _argmax_optimize_par(self, pde_energy, theta_list, optimizer_type):
@@ -202,17 +201,32 @@ class SNNDictionary2D(dt.AbstractDictionary): # shallow_neural_dict with 2D inpu
     def find_optimal_element(self, energy):
         
         # initial guesses 
+        start_0 = time.time()
         pde_energy = energy.evaluate_large_scale
         theta_init_guess = self._select_initial_elements(pde_energy, best_k=1)
+        end_0 = time.time()
+        print('\n Initial guess time = {:.4f}s'.format(end_0 - start_0))
 
         # process the optimization 
-        optimizer_type = self.optimizer
-        pde_energy = energy.evaluate
-        theta_list, evaluate_list = self._argmax_optimize(pde_energy, theta_init_guess, optimizer_type)
-        
-        # find the best element via the list of evaluation
-        index = evaluate_list.argmax()
-        optimal_element = self._polar_to_cartesian(theta_list[index, ...])
+        if self.optimizer:    
+            # process the optimization 
+            start_1 = time.time()
+            optimizer_type = self.optimizer
+            pde_energy = energy.evaluate
+            print('\n Start optimization:')
+            theta_list, evaluate_list = self._argmax_optimize(pde_energy, theta_init_guess, optimizer_type)
+            end_1 = time.time()
+            print(' optimization time = {:.4f}s'.format(end_1 - start_1))
+            
+            # find the best element via the list of evaluation
+            index = evaluate_list.argmin()
+            optimal_element = self._polar_to_cartesian(theta_list[index, ...])
+        else:
+            optimal_element = self._polar_to_cartesian(theta_init_guess[0, ...].reshape(-1,1))
+            
+        # total time cost
+        end_2 = time.time()
+        print('\n Total selection time = {:.4f}s'.format(end_2 - start_0))
         
         # return the parameters of the best element
         return optimal_element

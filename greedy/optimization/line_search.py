@@ -4,6 +4,7 @@ Added by Xianlin Jin
 
 Line search library:
 strong_wolfe is copied from torch.optim.LBFGS
+armijo (arc_armijo) is coded by Xianlin
 """
 
 import torch

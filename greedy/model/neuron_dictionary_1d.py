@@ -1,6 +1,3 @@
-# import sys
-# sys.path.append('../')
-
 import time
 import torch
 import torch.nn as nn 
@@ -98,8 +95,6 @@ class NeuronDictionary1D(dt.AbstractDictionary): # shallow_neural_dict with 1D i
         all_theta, all_param = self._gather_vertical_param()
         param_shape = all_theta[0].shape
         
-        # we should modify here 
-        # pde_energy should contain assert-language to avoid dimensionlaity inconsistency
         # only index[0] or some top-k indices
         all_init_loss = pde_energy(all_param)
         _, index = torch.sort(all_init_loss, descending=False, dim=0)

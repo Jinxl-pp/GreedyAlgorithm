@@ -2,10 +2,7 @@ import torch
 import numpy as np
 from . import energy 
 
-## =====================================
-## energy for 1D second order equation
-
-class Elliptic_2ord_1d_NBC(energy.AbstractEnergy):
+class FNM_Elliptic_2nd_1d_NBC(energy.AbstractEnergy): 
     
     def __init__(self, 
                 activation,
@@ -22,16 +19,13 @@ class Elliptic_2ord_1d_NBC(energy.AbstractEnergy):
         The minimizer of a continuous energy is equivalent to the H1 
         solution of the original PDE.
         INPUT: 
-            pre_solution: a previous solution. The evaluation of target 
-                          function at pre_solution determines the parameters
-                          of the next neuron.
-            activation: onlinear activation functions.
+            activation: nonlinear activation functions.
             quadrature: full quadrature information.
             pde: a PDE object used in energy evaluation.
             device: cpu or cuda.
             parallel_evaluation: option for evaluation with a large scale.     
         """
-        super(Elliptic_2ord_1d_NBC, self).__init__()
+        super(FNM_Elliptic_2nd_1d_NBC, self).__init__()
         
         self.sigma = activation.activate
         self.dsigma = activation.dactivate
@@ -59,8 +53,8 @@ class Elliptic_2ord_1d_NBC(energy.AbstractEnergy):
         obj_val_data = obj_val.detach()
         
         # get gradient evaluated on all quadpts
-        y = obj_val.sum()
-        gradient = torch.autograd.grad(outputs=y, inputs=quadpts) #, create_graph=True)
+        f = obj_val.sum()
+        gradient = torch.autograd.grad(outputs=f, inputs=quadpts) #, create_graph=True)
         obj_grad_data = gradient[0].detach()
         
         # reset self.quadpts
@@ -80,7 +74,7 @@ class Elliptic_2ord_1d_NBC(energy.AbstractEnergy):
     def energy_norm(self, obj_func): 
         
         """
-        Get measure in square L2 and the energy norm sqrt(a(u,u))
+        Get measure in square L2 and the energy norm a(u,u)
         """
         
         # get bilinear forms 
@@ -101,7 +95,7 @@ class Elliptic_2ord_1d_NBC(energy.AbstractEnergy):
     
     def energy_error(self):
         """
-        Numerical errors of pre_solution in square L2 and the energy norm sqrt(a(u,u))
+        Numerical errors of pre_solution in square L2 and the energy norm a(u,u)
         """
         return self.energy_norm(self._get_error)
         

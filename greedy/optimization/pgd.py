@@ -1,3 +1,13 @@
+"""
+Created on Thur May 5 13:56 2022
+
+@author: Jinpp (xianlincn@pku.edu.cn)
+@version: 1.0
+@brief: Projected gradient optimizer, with box constraints.
+@modifications: to be added
+"""
+
+
 import torch
 from functools import reduce
 

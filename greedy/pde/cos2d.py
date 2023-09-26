@@ -13,7 +13,7 @@ Created on Tue Sept 27 23:55 2022
 
 import torch
 import numpy as np
-from pde import PDE
+from .pde import PDE
 
 # pi = 3.1415926535897932384626
 
@@ -22,7 +22,7 @@ from pde import PDE
 #            zero Dirichlet boundary condition            #
 ##=======================================================##
 
-class DataCos1m2dDirichletBC(PDE):
+class DataCos_2nd_2d_DBC(PDE):
 
     """ 2nd order elliptic PDE in 2D:
         \Omega:    (-1,1)*(-1,1)
@@ -112,7 +112,7 @@ class DataCos1m2dDirichletBC(PDE):
 #            zero Neumann boundary condition            #
 ##=====================================================##
 
-class DataCos1m2dNeumannBC(PDE):
+class DataCos_2nd_2d_NBC(PDE):
     """ 2nd order elliptic PDE in 2D:
         \Omega:    (-1,1)*(-1,1)
              m:    1

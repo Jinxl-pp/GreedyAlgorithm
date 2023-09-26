@@ -14,6 +14,11 @@ class Test:
         
     def b_func(self, p):
         return 2. * p
+    
+    
+def partition(num_param, n):
+    division = len(num_param) / n
+    return [0]+[round(division * (i + 1)) for i in range(n)]
 
 
 if __name__ == '__main__':
@@ -58,3 +63,23 @@ if __name__ == '__main__':
     if e:
         f = 1
     print(f)
+    
+    ###
+    ### part 4
+    ###
+    lst = range(63355)
+    print(partition(lst,10))
+    print(torch.linspace(0,1,10))
+    
+    ###
+    ### part 5
+    ###
+    
+    a = torch.tensor([1.,2.])
+    b = torch.tensor([2.])
+    c = torch.tensor([3.])
+    items = (a,b,c)
+    print(items)
+    print(items[1:])
+    print(items[0].pow(2).sum())
+    

@@ -13,7 +13,7 @@ Created on Tue Feb 07 12:13 2023
 
 import torch
 import numpy as np
-from pde import PDE
+from .pde import PDE
 
 # pi = 3.1415926535897932384626
 
@@ -21,7 +21,7 @@ from pde import PDE
 #            zero Neumann boundary condition            #
 ##=====================================================##   
     
-class DataCos1m3d_NeumannBC:
+class DataCos_2nd_3d_NBC:
     """ 2nd order elliptic PDE in 3D:
         \Omega:    (-1,1)*(-1,1)*(-1,1)
              m:    1

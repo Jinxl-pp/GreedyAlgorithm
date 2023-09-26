@@ -1,3 +1,12 @@
+"""
+Created on Thur May 5 14:23 2022
+
+@author: Jinpp (xianlincn@pku.edu.cn)
+@version: 1.0
+@brief: Accelerated projected gradient optimizer, FISTA method.
+@modifications: to be added
+"""
+
 import torch
 from functools import reduce
 
