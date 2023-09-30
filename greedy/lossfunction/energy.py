@@ -24,7 +24,7 @@ class AbstractEnergy(ABC):
         pass
     
     @abstractmethod
-    def energy_norm(self, obj_func):
+    def _energy_norm(self, obj_func):
         pass
     
     @abstractmethod

@@ -17,7 +17,8 @@ class DataWave_1d(PDE):
     """ Combinations of sine functions with a wide 
         range of frequencies.
         Reference:
-        [1] Cai W, Li X, Liu L. A phase shift deep neural network for high 
+        [1] 
+            Cai W, Li X, Liu L. A phase shift deep neural network for high 
             frequency approximation and wave problems[J]. SIAM Journal on 
             Scientific Computing, 2020, 42(5): A3285-A3312.
         

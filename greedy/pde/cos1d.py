@@ -176,3 +176,8 @@ class DataCos_2nd_1d_NBC(PDE):
         pi = np.pi
         val = pi**2 * torch.cos(pi*p) + torch.cos(pi*p)
         return val
+    
+    def trace(self, p):
+        """ The Neumann-trace operator of the PDE
+        """
+        return 0. * p

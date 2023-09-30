@@ -4,8 +4,9 @@ Created on Sun Sep 24 14:01 2023
 @author: Jinpp (xianlincn@pku.edu.cn)
 @version: 1.0
 @brief: Training shallow neural network using the variational
-        loss and the orthogonal greedy algorithm, to solve the
-        following second order elliptic equation in 1D:
+        loss (i.e., finite neuron method) and the orthogonal 
+        greedy algorithm, to solve the following second-order 
+        elliptic equation in 1D:
                     - u_xx = f, in Omega of R
                          u = g, on boundary of Omega
         with g=0 as the homogeneous Dirichlet's boundary condition.
@@ -14,7 +15,10 @@ Created on Sun Sep 24 14:01 2023
             (1/2)*(nabla v, nabla v) + (1/2*mu)*(v-g,v-g)_{boundary} - (f,v),
         with mu being the penalty parameter for boundary condition. 
         The training data and the testing data are produced by
-        piecewise Gauss-Legendre quadrature rule.
+        piecewise Gauss-Legendre quadrature rule. For dictionary
+        settings:
+        (1) activation available for relu, bspline and sigmoid,
+        (2) optimizer available for pgd, fista and False.
 @modifications: to be added
 """
 
@@ -83,13 +87,13 @@ def orthogonal_greedy(dictionary, energy, snn):
 
         # stiffness matrix and load vector
         start = time.time()
-        Ak = inner_param[k,:].reshape(1,-1) # (w, b)^T
+        Ak = inner_param[k,:].reshape(1,-1) 
         ones = torch.ones(num_quadpts,1).to(device)
-        Bk_in = torch.cat([energy.quadpts, ones], dim=1) # (x,1)
-        Ck_in = torch.mm(Ak, Bk_in.t()) # (w, b)^T * (x, 1)^T
+        Bk_in = torch.cat([energy.quadpts, ones], dim=1) 
+        Ck_in = torch.mm(Ak, Bk_in.t()) 
         ones = torch.ones(num_bdnodes,1).to(device)
-        Bk_bd = torch.cat([energy.boundary, ones], dim=1) # (x,1)
-        Ck_bd = torch.mm(Ak, Bk_bd.t()) # (w, b)^T * (x, 1)^T
+        Bk_bd = torch.cat([energy.boundary, ones], dim=1) 
+        Ck_bd = torch.mm(Ak, Bk_bd.t()) 
         core_mat_in[k:k+1, :] = Ck_in
         core_mat_bd[k:k+1, :] = Ck_bd
         core_in = core_mat_in[0:k+1, :]
@@ -126,10 +130,10 @@ if __name__ == "__main__":
     pde = cos1d.Data_poisson_1d_DBC()
     
     # neuron dictionary settings
-    ftype = "relu" # "relu" # "bspline" # "sigmoid"
+    ftype = "relu" 
     degree = 2
     activation = af.ActivationFunction(ftype, degree)
-    optimizer = False #False # "pgd" # "fista" 
+    optimizer = False 
     param_b_domain = torch.tensor([[-2., 2.]])
     param_mesh_size = 1/1000
     dictionary = ndict.NeuronDictionary1D(activation,

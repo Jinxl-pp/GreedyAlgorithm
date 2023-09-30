@@ -1,8 +1,9 @@
 import torch
+from torch.autograd import Variable
 import numpy as np
 from . import energy 
 
-class FNM_Elliptic_2nd_2d_NBC(energy.AbstractEnergy):
+class FNM_Elliptic_4th_2d_NBC(energy.AbstractEnergy): 
     
     def __init__(self, 
                 activation,
@@ -10,14 +11,22 @@ class FNM_Elliptic_2nd_2d_NBC(energy.AbstractEnergy):
                 pde,
                 device,
                 parallel_evaluation=False): 
+        
         """ 
         The discrete energy functional for the second order elliptic PDE:
-                        - Lap(u) + u = f, in Omega of R
-                             du/dx = g, on boundary of Omega
-        with g=0 as the homogeneous Neumann's boundary condition.
-        Solve the equation by minimizing an energy functional with 
-        weak form of this PDE.
-            J(u) = (1/2)*(nabla_u,nabla_u) + (1/2)*(u,u) - (f,u) - (g,u).
+                        [-Lap]^2(u) + u = f, in Omega of R
+                    [d\dn](Lap(u)+[d/ds]^2(u)) 
+                       - [d\ds](k*du/ds) = g_1, on boundary of Omega
+                             [d/dn]^2(u) = g_2, on boundary of Omega
+        with g_1=g_2=0 as the homogeneous Neumann's boundary condition.
+        The first Neumann-type boundary condition consists of the tangential 
+        direction [d/ds] and the curvature of boundary k. One can refer to 
+        [1] 
+            Chien, W. CH. (1980). Variational methods and finite elements.
+            
+        for more details. Solve the equation by minimizing an energy functional 
+        with weak form of this PDE.
+            J(u) = (1/2)*(hessian(u),hessian(u)) + (1/2)*(u,u) - (f,u) - (g_1+g_2,u).
         INPUT: 
             activation: nonlinear activation functions.
             quadrature: full quadrature information.
@@ -25,7 +34,7 @@ class FNM_Elliptic_2nd_2d_NBC(energy.AbstractEnergy):
             device: cpu or cuda.
             parallel_evaluation: option for evaluation with a large scale.     
         """
-        super(FNM_Elliptic_2nd_2d_NBC, self).__init__()
+        super(FNM_Elliptic_4th_2d_NBC, self).__init__()
         
         self.sigma = activation.activate
         self.dsigma = activation.dactivate
@@ -44,27 +53,42 @@ class FNM_Elliptic_2nd_2d_NBC(energy.AbstractEnergy):
         self.pre_solution = self._zero
         self.parallel_evaluation = parallel_evaluation
         
-        
+
     def _get_energy_items(self, obj_func):
+        
+        # initialized enery-item
+        items = []
         
         # gradient evaluation on quadpts
         xpts = self.quadpts[...,0:1].requires_grad_()
         ypts = self.quadpts[...,1:2].requires_grad_()
         quadpts = torch.cat([xpts,ypts],dim=1)
         obj_val = obj_func(quadpts)
-        obj_val_data = obj_val.detach()
+        items.append(obj_val.detach())
         
         # get gradient evaluated on all quadpts
         f = obj_val.sum()
-        gradient_x = torch.autograd.grad(outputs=f, inputs=xpts, retain_graph=True)
-        gradient_y = torch.autograd.grad(outputs=f, inputs=ypts)
-        obj_grad_x_data = gradient_x[0].detach()
-        obj_grad_y_data = gradient_y[0].detach()
+        gradient_x = torch.autograd.grad(outputs=f, inputs=xpts, create_graph=True)
+        gradient_y = torch.autograd.grad(outputs=f, inputs=ypts, create_graph=True)
+        items.append(gradient_x[0].detach())
+        items.append(gradient_y[0].detach())
+
+        # get second-order derivatives evaluated on all quadpts
+        dxf = gradient_x[0].sum()
+        dyf = gradient_y[0].sum()
+        hessian_xx = torch.autograd.grad(outputs=dxf, inputs=xpts, create_graph=True)
+        hessian_xy = torch.autograd.grad(outputs=dxf, inputs=ypts, create_graph=True)
+        hessian_yx = torch.autograd.grad(outputs=dyf, inputs=xpts, create_graph=True)
+        hessian_yy = torch.autograd.grad(outputs=dyf, inputs=ypts)
+        items.append(hessian_xx[0].detach())
+        items.append(hessian_xy[0].detach())
+        items.append(hessian_yx[0].detach())
+        items.append(hessian_yy[0].detach())
         
         # reset self.quadpts
         self.quadpts = self.quadpts.detach()
         
-        return (obj_val_data, obj_grad_x_data, obj_grad_y_data)
+        return items
     
     
     def _get_error(self, p):
@@ -77,7 +101,9 @@ class FNM_Elliptic_2nd_2d_NBC(energy.AbstractEnergy):
     
     
     def _zero(self, p):
-        return 0. * p[...,0:1]
+        x = p[...,0:1]
+        y = p[...,1:2]
+        return 0. * torch.sin(x) * torch.sin(y)
     
     
     def _energy_norm(self, obj_func): 
@@ -109,7 +135,6 @@ class FNM_Elliptic_2nd_2d_NBC(energy.AbstractEnergy):
         return self._energy_norm(self._get_error)
     
     
-    
     def get_stiffmat_and_rhs(self, parameters, core):
         
         """
@@ -123,18 +148,23 @@ class FNM_Elliptic_2nd_2d_NBC(energy.AbstractEnergy):
         # get components of parameters, in a column
         w1 = parameters[:,0:1]
         w2 = parameters[:,1:2]
+        v11 = w1 * w1
+        v12 = w1 * w2
+        v21 = w2 * w1
+        v22 = w2 * w2
         
         # core matrix and vectors used for vecterization
         g1 = self.sigma(core)
-        dg1 = self.dsigma(core, 1)
+        d2g1 = self.dsigma(core, 2)
         g2 = g1 * self.weights.t()
-        dg2 = dg1 * self.weights.t()
+        d2g2 = d2g1 * self.weights.t()
         
         # assemble stiffness matrix
         G = torch.mm(g1, g2.t()) * self.area
-        dxG = torch.mm(dg1, dg2.t()) * torch.mm(w1, w1.t()) * self.area
-        dyG = torch.mm(dg1, dg2.t()) * torch.mm(w2, w2.t()) * self.area
-        Gk = dxG + dyG + G
+        coef = torch.mm(v11, v11.t()) + torch.mm(v12, v12.t()) + \
+                torch.mm(v21, v21.t()) + torch.mm(v22, v22.t())
+        d2G = torch.mm(d2g1, d2g2.t()) * coef * self.area
+        Gk = d2G + G
         
         # assemble load vector
         f = self.source_data * self.weights
@@ -142,14 +172,16 @@ class FNM_Elliptic_2nd_2d_NBC(energy.AbstractEnergy):
         
         return (Gk, bk)
     
-
+    
     def evaluate(self, param):
         
         # get items of the energy bilinear form, denote pre_solution := u
         items = self._get_energy_items(self.pre_solution)
         u_val = items[0]
-        u_grad_x = items[1]
-        u_grad_y = items[2]
+        u_hess_xx = item[3]
+        u_hess_xy = item[4]
+        u_hess_yx = item[5]
+        u_hess_yy = item[6]
                 
         # get components of theta
         w1 = param[0]
@@ -161,14 +193,16 @@ class FNM_Elliptic_2nd_2d_NBC(energy.AbstractEnergy):
         # core matrix and vectors used for vecterization
         core = torch.mm(A, B)
         g = self.sigma(core)
-        dg = self.dsigma(core, 1)
+        d2g = self.dsigma(core, 2)
         fg = torch.mm(g, self.source_data * self.weights)
         ug = torch.mm(g, u_val * self.weights)
-        dxudg = torch.mm(dg, u_grad_x * self.weights) * w1
-        dyudg = torch.mm(dg, u_grad_y * self.weights) * w2
+        dxxudxxg = torch.mm(d2g, u_hess_xx * self.weights) * w1 * w1
+        dxyudxyg = torch.mm(d2g, u_hess_xy * self.weights) * w1 * w2
+        dyyudyyg = torch.mm(d2g, u_hess_yy * self.weights) * w2 * w2
+        d2ud2g = dxxudxxg + 2*dxyudxyg + dyyudyyg
         
         # assemble
-        energy_eval = -(1/2)*((dxudg+dyudg+ug-fg) * self.area).pow(2)
+        energy_eval = -(1/2)*((d2ud2g+ug-fg) * self.area).pow(2)
             
         return energy_eval
     
@@ -182,8 +216,10 @@ class FNM_Elliptic_2nd_2d_NBC(energy.AbstractEnergy):
         # get items of the energy bilinear form, denote pre_solution := u
         items = self._get_energy_items(self.pre_solution)
         u_val = items[0]
-        u_grad_x = items[1]
-        u_grad_y = items[2]  
+        u_hess_xx = items[3]
+        u_hess_xy = items[4]
+        u_hess_yx = items[5]
+        u_hess_yy = items[6]
                 
         # get components of theta
         w1 = param[0]
@@ -196,27 +232,34 @@ class FNM_Elliptic_2nd_2d_NBC(energy.AbstractEnergy):
         num_param = A.shape[0]
         ug = torch.zeros(num_param,1)
         fg = torch.zeros(num_param,1)
-        dxudg = torch.zeros(num_param,1) 
-        dyudg = torch.zeros(num_param,1)        
+        dxxudxxg = torch.zeros(num_param,1) 
+        dxyudxyg = torch.zeros(num_param,1)    
+        dyyudyyg = torch.zeros(num_param,1)
         
         num_batch = 2
         division = self._partition(range(num_param),num_batch)
         for i in range(num_batch):
             core = torch.mm(A[division[i]:division[i+1],:], B)
             g = self.sigma(core)
-            dg = self.dsigma(core, 1)
+            d2g = self.dsigma(core, 2)
             del core
             ug[division[i]:division[i+1]] = torch.mm(g, u_val * self.weights)
             fg[division[i]:division[i+1]] = torch.mm(g, self.source_data * self.weights)
-            dxudg[division[i]:division[i+1]] = torch.mm(dg, u_grad_x * self.weights) * w1[division[i]:division[i+1],:]
-            dyudg[division[i]:division[i+1]] = torch.mm(dg, u_grad_y * self.weights) * w2[division[i]:division[i+1],:]
-            del g, dg
+            dxxudxxg[division[i]:division[i+1]] = torch.mm(d2g, u_hess_xx * self.weights) * \
+                                        w1[division[i]:division[i+1],:] * w1[division[i]:division[i+1],:]
+            dxyudxyg[division[i]:division[i+1]] = torch.mm(d2g, u_hess_xy * self.weights) * \
+                                        w1[division[i]:division[i+1],:] * w2[division[i]:division[i+1],:]
+            dyyudyyg[division[i]:division[i+1]] = torch.mm(d2g, u_hess_yy * self.weights) * \
+                                        w2[division[i]:division[i+1],:] * w2[division[i]:division[i+1],:]
+            del g, d2g
+        d2ud2g = dxxudxxg + 2*dxyudxyg + dyyudyyg
         
         # assemble
-        energy_eval = -(1/2)*((dxudg+dyudg+ug-fg) * self.area).pow(2)   
+        energy_eval = -(1/2)*((d2ud2g+ug-fg) * self.area).pow(2)
             
         return energy_eval
     
     
     def update_solution(self, pre_solution):
         self.pre_solution = pre_solution
+    

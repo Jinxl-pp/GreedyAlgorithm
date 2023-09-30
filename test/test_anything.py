@@ -74,12 +74,18 @@ if __name__ == '__main__':
     ###
     ### part 5
     ###
-    
     a = torch.tensor([1.,2.])
     b = torch.tensor([2.])
     c = torch.tensor([3.])
     items = (a,b,c)
     print(items)
-    print(items[1:])
+    print(items[0:-1])
     print(items[0].pow(2).sum())
+    
+    ###
+    ### part 5
+    ###
+    w = torch.rand(5,1)
+    print(w)
+    print(torch.ones(w.shape))
     

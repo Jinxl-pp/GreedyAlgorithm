@@ -16,8 +16,9 @@ class FNM_Elliptic_2nd_1d_NBC(energy.AbstractEnergy):
                         - u_xx + u = f, in Omega of R
                              du/dx = g, on boundary of Omega
         with g=0 as the homogeneous Neumann's boundary condition.
-        The minimizer of a continuous energy is equivalent to the H1 
-        solution of the original PDE.
+        Solve the equation by minimizing an energy functional with 
+        weak form of this PDE.
+            J(u) = (1/2)*(u_x,u_x) + (1/2)*(u,u) - (f,u) - (g,u).
         INPUT: 
             activation: nonlinear activation functions.
             quadrature: full quadrature information.
@@ -41,7 +42,7 @@ class FNM_Elliptic_2nd_1d_NBC(energy.AbstractEnergy):
                           determines the parameters of the next neuron. The 
                           pre_solution is initialized by zero function.
         """ 
-        self.pre_solution = self.zero
+        self.pre_solution = self._zero
         self.parallel_evaluation = parallel_evaluation
         
         
@@ -67,11 +68,11 @@ class FNM_Elliptic_2nd_1d_NBC(energy.AbstractEnergy):
         return self.pde.solution(p) - self.pre_solution(p)
     
     
-    def zero(self, p):
+    def _zero(self, p):
         return 0. * p
     
     
-    def energy_norm(self, obj_func): 
+    def _energy_norm(self, obj_func): 
         
         """
         Get measure in square L2 and the energy norm a(u,u)
@@ -97,7 +98,7 @@ class FNM_Elliptic_2nd_1d_NBC(energy.AbstractEnergy):
         """
         Numerical errors of pre_solution in square L2 and the energy norm a(u,u)
         """
-        return self.energy_norm(self._get_error)
+        return self._energy_norm(self._get_error)
         
     
     def get_stiffmat_and_rhs(self, parameters, core):

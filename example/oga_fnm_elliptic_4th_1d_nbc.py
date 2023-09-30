@@ -1,16 +1,21 @@
 """
-Created on Sat Aug 5 11:14 2023
+Created on Mon Sep 25 15:58 2023
 
 @author: Jinpp (xianlincn@pku.edu.cn)
 @version: 1.0
 @brief: Training shallow neural network using the variational
-        loss and the orthogonal greedy algorithm, to solve the
-        following second-order elliptic equation in 1D:
-                    - u_xx + u = f, in Omega of R
-                    du/dx = g, on boundary of Omega
-        with g=0 as the homogeneous Neumann's boundary condition.
+        loss (i.e., finite neuron method) and the orthogonal 
+        greedy algorithm, to solve the following fourth-order 
+        elliptic equation in 1D:
+                [-d_xx]^2(u) + u = f, in Omega of R
+                           du/dx = g_1, on boundary of Omega
+                     [d/dx]^2(u) = g_2, on boundary of Omega
+        with g_1=g_2=0 as the homogeneous Neumann's boundary condition.
         The training data and the testing data are produced by
-        piecewise Gauss-Legendre quadrature rule.
+        piecewise Gauss-Legendre quadrature rule. For dictionary
+        settings:
+        (1) activation available for relu, bspline and sigmoid,
+        (2) optimizer available for pgd, fista and False.
 @modifications: to be added
 """
 
@@ -21,12 +26,12 @@ import time
 import torch
 import numpy as np
 
-from greedy.pde import cos1d
+from greedy.pde import poly1d
 from greedy.tools import show_rate
 from greedy.model import shallownet
 from greedy.model import activation_function as af 
 from greedy.model import neuron_dictionary_1d as ndict
-from greedy.lossfunction import fnm_elliptic_2nd_1d_nbc as loss
+from greedy.lossfunction import fnm_elliptic_4th_1d_nbc as loss
 from greedy.quadrature import gauss_legendre_quadrature as gq
 
 # precision settings
@@ -81,10 +86,10 @@ def orthogonal_greedy(dictionary, energy, snn):
 
         # stiffness matrix and load vector
         start = time.time()
-        Ak = inner_param[k,:].reshape(1,-1) # (w, b)^T
+        Ak = inner_param[k,:].reshape(1,-1) 
         ones = torch.ones(num_quadpts,1).to(device)
-        Bk = torch.cat([energy.quadpts, ones], dim=1) # (x,1)
-        Ck = torch.mm(Ak, Bk.t()) # (w, b)^T * (x, 1)^T
+        Bk = torch.cat([energy.quadpts, ones], dim=1) 
+        Ck = torch.mm(Ak, Bk.t()) 
         core_mat[k:k+1, :] = Ck
         core = core_mat[0:k+1, :]
         system = energy.get_stiffmat_and_rhs(inner_param[0:k+1,...], core)
@@ -110,20 +115,18 @@ def orthogonal_greedy(dictionary, energy, snn):
     
     # return numerical results
     return errl2_record, erra_record, snn
- 
-
 
 
 if __name__ == "__main__":
     
     # pde's exact solution
-    pde = cos1d.DataCos_2nd_1d_NBC()
+    pde = poly1d.DataPoly_4th_1d_NBC()
     
     # neuron dictionary settings
-    ftype = "relu" # "relu" # "bspline" # "sigmoid"
-    degree = 2
+    ftype = "relu" 
+    degree = 3
     activation = af.ActivationFunction(ftype, degree)
-    optimizer = False #False # "pgd" # "fista" 
+    optimizer = False 
     param_b_domain = torch.tensor([[-2., 2.]])
     param_mesh_size = 1/1000
     dictionary = ndict.NeuronDictionary1D(activation,
@@ -141,7 +144,7 @@ if __name__ == "__main__":
     quadrature = gl_quad.interval_quadpts(interval, h)
     
     # enery loss function settings
-    energy = loss.FNM_Elliptic_2nd_1d_NBC(dictionary.activation,
+    energy = loss.FNM_Elliptic_4th_1d_NBC(dictionary.activation,
                                     quadrature,
                                     pde,
                                     device)
@@ -165,17 +168,19 @@ if __name__ == "__main__":
     # h = np.array([1/1000])     
     # param_mesh_size = 1/1000
     # 
+    # theoretical convergence rates:
+    # O(n^-4) in L2, O(n^-2) in H2
     # final results:
     # +------------------------------------------------------+
-    # |    OGA-FNM, relu_power = 2, total time = 48.3846s    |
+    # |    OGA-FNM, relu_power = 3, total time = 57.3880s    |
     # +-----+-----------+---------+------------+-------------+
     # |   N |   l2_err  | l2_rate | energy_err | energy_rate |
     # +-----+-----------+---------+------------+-------------+
-    # |   2 | 1.058e+00 |    -    | 3.245e+00  |      -      |
-    # |   4 | 4.136e-01 |   1.35  | 2.012e+00  |     0.69    |
-    # |   8 | 1.985e-02 |   4.38  | 1.859e-01  |     3.44    |
-    # |  16 | 7.821e-04 |   4.67  | 2.780e-02  |     2.74    |
-    # |  32 | 7.625e-05 |   3.36  | 5.862e-03  |     2.25    |
-    # |  64 | 8.293e-06 |   3.20  | 1.365e-03  |     2.10    |
-    # | 128 | 9.666e-07 |   3.10  | 3.220e-04  |     2.08    |
+    # |   2 | 6.951e-01 |    -    | 6.556e+00  |      -      |
+    # |   4 | 1.407e+00 |  -1.02  | 6.309e+00  |     0.06    |
+    # |   8 | 1.590e-02 |   6.47  | 1.206e+00  |     2.39    |
+    # |  16 | 4.585e-04 |   5.12  | 1.659e-01  |     2.86    |
+    # |  32 | 1.699e-05 |   4.75  | 3.448e-02  |     2.27    |
+    # |  64 | 5.375e-07 |   4.98  | 6.812e-03  |     2.34    |
+    # | 128 | 2.990e-08 |   4.17  | 1.692e-03  |     2.01    |
     # +-----+-----------+---------+------------+-------------+

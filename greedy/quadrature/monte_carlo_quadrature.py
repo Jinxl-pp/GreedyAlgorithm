@@ -1,5 +1,5 @@
 import numpy as np
-from quadrature import Quadrature
+from .quadrature import Quadrature
 
 ## =====================================
 ## random samples

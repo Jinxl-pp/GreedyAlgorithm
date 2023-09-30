@@ -27,7 +27,6 @@ class NeuronDictionary2D(dt.AbstractDictionary): # shallow_neural_dict with 2D i
         The STANDARD general dictionary for shallow neural networks,
                 { \sigma(w*x + b): (w, b) \in R^{3} }
         INPUT:
-            geo_dim: the dimension of the background space R^d.
             activation: nonlinear activation functions.
             optimizer: training algorithms for the argmax-subproblem.
                         if self.optimizer = False, then set best_k=1 in 

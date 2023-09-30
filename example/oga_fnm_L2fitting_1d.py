@@ -4,11 +4,15 @@ Created on Wed Sep 20 16:16 2023
 @author: Jinpp (xianlincn@pku.edu.cn)
 @version: 1.0
 @brief: Training shallow neural network using the variational
-        loss and the orthogonal greedy algorithm, to solve the
-        following L2-fitting problem in 1D:
+        loss (i.e., finite neuron method) and the orthogonal 
+        greedy algorithm, to solve the following L2-fitting 
+        problem in 1D:
                     u = f, in Omega of R. 
         The training data and the testing data are produced by
-        piecewise Gauss-Legendre quadrature rule.
+        piecewise Gauss-Legendre quadrature rule. For dictionary
+        settings:
+        (1) activation available for relu, bspline and sigmoid,
+        (2) optimizer available for pgd, fista and False.
 @modifications: to be added
 """
 
@@ -75,10 +79,10 @@ def orthogonal_greedy(dictionary, energy, snn):
 
         # stiffness matrix and load vector
         start = time.time()
-        Ak = inner_param[k,:].reshape(1,-1) # (w, b)^T
+        Ak = inner_param[k,:].reshape(1,-1) 
         ones = torch.ones(num_quadpts,1).to(device)
-        Bk = torch.cat([energy.quadpts, ones], dim=1) # (x,1)
-        Ck = torch.mm(Ak, Bk.t()) # (w, b)^T * (x, 1)^T
+        Bk = torch.cat([energy.quadpts, ones], dim=1) 
+        Ck = torch.mm(Ak, Bk.t()) 
         core_mat[k:k+1, :] = Ck
         core = core_mat[0:k+1, :]
         system = energy.get_stiffmat_and_rhs(inner_param[0:k+1,...], core)
@@ -112,10 +116,10 @@ if __name__ == "__main__":
     pde = wave1d.DataWave_1d()
     
     # neuron dictionary settings
-    ftype = "relu" # "relu" # "bspline" # "sigmoid"
+    ftype = "relu"
     degree = 1
     activation = af.ActivationFunction(ftype, degree)
-    optimizer = False #False # "pgd" # "fista" 
+    optimizer = False 
     param_b_domain = torch.tensor([[-np.pi-1, np.pi+1]])
     param_mesh_size = 1/2000
     dictionary = ndict.NeuronDictionary1D(activation,

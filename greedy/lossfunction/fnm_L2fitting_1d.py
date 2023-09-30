@@ -13,7 +13,8 @@ class FNM_L2fitting_1d(energy.AbstractEnergy):
     
         """ 
         The discrete energy functional for the L2-fitting problem:
-                        u = f, in Omega of R
+                        u = f, in Omega of R.
+                        J(u) = (1/2)*(u-f,u-f)
         INPUT: 
             activation: nonlinear activation functions.
             quadrature: full quadrature information.
@@ -37,7 +38,7 @@ class FNM_L2fitting_1d(energy.AbstractEnergy):
                           determines the parameters of the next neuron. The 
                           pre_solution is initialized by zero function.
         """ 
-        self.pre_solution = self.zero
+        self.pre_solution = self._zero
         self.parallel_evaluation = parallel_evaluation
         
         
@@ -52,11 +53,11 @@ class FNM_L2fitting_1d(energy.AbstractEnergy):
         return self.pde.solution(p) - self.pre_solution(p)
     
     
-    def zero(self, p):
+    def _zero(self, p):
         return 0. * p
     
     
-    def energy_norm(self, obj_func): 
+    def _energy_norm(self, obj_func): 
         
         """
         Get measure in square L2 norm
@@ -79,7 +80,7 @@ class FNM_L2fitting_1d(energy.AbstractEnergy):
         """
         Numerical errors of pre_solution in square L2 norm
         """
-        return self.energy_norm(self._get_error)
+        return self._energy_norm(self._get_error)
         
     
     def get_stiffmat_and_rhs(self, parameters, core):
