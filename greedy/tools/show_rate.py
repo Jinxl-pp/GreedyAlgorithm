@@ -1,5 +1,5 @@
 import numpy as np
-from ..thirdparty.prettytable import PrettyTable
+from .prettytable import PrettyTable
 
 
 def get_title_string(loss_type, ftype, degree, total_time):
