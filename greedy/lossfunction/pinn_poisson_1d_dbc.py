@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from . import energy 
 
-class PINN_Elliptic_2nd_1d_NBC(energy.AbstractEnergy): 
+class PINN_Poisson_1d_DBC(energy.AbstractEnergy): 
     
     def __init__(self, 
                 activation,
@@ -15,12 +15,12 @@ class PINN_Elliptic_2nd_1d_NBC(energy.AbstractEnergy):
         
         """ 
         The discrete energy functional for the second order elliptic PDE:
-                        - u_xx + u = f, in Omega of R
-                             du/dx = g, on boundary of Omega
+                        - u_xx = f, in Omega of R
+                             u = g, on boundary of Omega
         with g=0 as the homogeneous Neumann's boundary condition.
         Solve the equation by minimizing an energy functional with 
         strong form of this PDE.
-            J(u) = ||-u_xx + u - f||^2 + mu*||du/dx-g||^2,
+            J(u) = ||u_xx + f||^2 + mu*||u-g||^2,
         with mu being the penalty parameter for the boundary condition. 
         INPUT: 
             activation: nonlinear activation functions.
@@ -31,7 +31,7 @@ class PINN_Elliptic_2nd_1d_NBC(energy.AbstractEnergy):
             penalty: the parameter in front of boundary terms.
             parallel_evaluation: option for evaluation with a large scale.     
         """
-        super(PINN_Elliptic_2nd_1d_NBC, self).__init__()
+        super(PINN_Poisson_1d_DBC, self).__init__()
         
         self.sigma = activation.activate
         self.dsigma = activation.dactivate
@@ -40,7 +40,7 @@ class PINN_Elliptic_2nd_1d_NBC(energy.AbstractEnergy):
         self.area = quadrature.area
         self.boundary = boundary
         self.source_data = pde.source(self.quadpts)
-        self.trace = pde.trace(self.boundary)
+        self.trace = pde.solution(self.boundary)
         self.pde = pde
         self.penalty = penalty
         
@@ -72,17 +72,13 @@ class PINN_Elliptic_2nd_1d_NBC(energy.AbstractEnergy):
         obj_hess_data = hessian[0].detach()
         
         # gradient evaluation on boundary nodes
-        boundary = self.boundary.requires_grad_()
-        obj_val_bd = obj_func(boundary)
-        f_bd = obj_val_bd.sum()
-        n_trace = torch.autograd.grad(outputs=f_bd, inputs=boundary)
-        obj_grad_bdata = n_trace[0].detach()
+        obj_val_bd = obj_func(self.boundary).detach()
         
         # clear autograd graph
         self.quadpts = self.quadpts.detach()
         self.boundary = self.boundary.detach()
         
-        return (obj_grad_bdata, obj_val_data, obj_grad_data, obj_hess_data)
+        return (obj_val_bd, obj_val_data, obj_grad_data, obj_hess_data)
     
     
     def _get_error(self, p):
@@ -131,14 +127,13 @@ class PINN_Elliptic_2nd_1d_NBC(energy.AbstractEnergy):
         items = self._get_energy_items(self.pre_solution)
         
         # inner residual
-        val = items[1]
-        hess = items[3]
-        residual_in = (-hess + val - self.source_data).pow(2) * self.weights
+        u_hess = items[3]
+        residual_in = (u_hess + self.source_data).pow(2) * self.weights
         residual_in = residual_in.sum() * self.area
         
         # boundary residual
-        trace = items[0]
-        residual_bd = (trace - self.trace).pow(2).sum() * self.penalty
+        u_trace = items[0]
+        residual_bd = (u_trace - self.trace).pow(2).sum() * self.penalty
         
         return residual_in + residual_in
     
@@ -156,29 +151,23 @@ class PINN_Elliptic_2nd_1d_NBC(energy.AbstractEnergy):
         
         # get components of parameters, in a column
         w = parameters[:,0:1]
-        I = torch.ones(w.shape)
         v = w * w
         
         # core matrix and vectors used for vecterization
-        g1 = self.sigma(core_in)
         d2g1 = self.dsigma(core_in, 2)
-        g2 = g1 * self.weights.t()
         d2g2 = d2g1 * self.weights.t()
-        dg_bd = self.dsigma(core_bd, 1)
+        g_bd = self.sigma(core_bd)
         
         # assemble stiffness matrix
-        G1 = torch.mm(g1, g2.t()) * self.area
-        G2 = torch.mm(g1, d2g2.t()) * torch.mm(I, v.t()) * self.area
-        G3 = torch.mm(d2g1, g2.t()) * torch.mm(v, I.t()) * self.area
-        G4 = torch.mm(d2g1, d2g2.t()) * torch.mm(v, v.t()) * self.area
-        G5 = torch.mm(dg_bd, dg_bd.t()) * torch.mm(w, w.t()) * self.penalty
-        Gk = G1 - G2 - G3 + G4 + G5
+        d2G = torch.mm(d2g1, d2g2.t()) * torch.mm(v, v.t()) * self.area
+        G_bd = torch.mm(g_bd, g_bd.t()) * self.penalty
+        Gk = d2G + G_bd
         
         # assemble load vector
-        gN = self.trace
+        gD = self.trace
         f = self.source_data * self.weights
-        bk = torch.mm(-d2g1, f) * v * self.area + \
-            torch.mm(g1, f) * self.area + torch.mm(dg_bd, gN) * self.penalty
+        bk = - torch.mm(d2g1, f) * v * self.area + \
+            torch.mm(g_bd, gD) * self.penalty
          
         return (Gk, bk)
         
@@ -188,7 +177,6 @@ class PINN_Elliptic_2nd_1d_NBC(energy.AbstractEnergy):
         # get items of the energy bilinear form, denote pre_solution := u
         items = self._get_energy_items(self.pre_solution)
         u_trace = items[0]
-        u_val = items[1]
         u_hess = items[3]
          
         # get components of theta
@@ -202,17 +190,13 @@ class PINN_Elliptic_2nd_1d_NBC(energy.AbstractEnergy):
         # core matrix and vectors used for vecterization
         core_in = torch.mm(A, B_in)
         core_bd = torch.mm(A, B_bd)
-        g_in = self.sigma(core_in)
-        dg_bd = self.dsigma(core_bd, 1)
+        g_bd= self.sigma(core_bd)
         d2g_in = self.dsigma(core_in, 2)
-        fg = torch.mm(g_in, self.source_data * self.weights) - \
-                torch.mm(d2g_in, self.source_data * self.weights) * w * w
-        ug = torch.mm(g_in, (-u_hess + u_val) * self.weights) - \
-             torch.mm(d2g_in, (-u_hess + u_val) * self.weights) * w * w
-        ug_bd = torch.mm(dg_bd, u_trace) * w * self.penalty
+        residual_in = torch.mm(d2g_in, (u_hess+self.source_data) * self.weights) * w * w
+        residual_bd = torch.mm(g_bd, u_trace - self.trace) * self.penalty
         
         # assemble
-        energy_eval = -(1/2)*((ug-fg) * self.area + ug_bd).pow(2)
+        energy_eval = -(1/2)*(residual_in * self.area + residual_bd).pow(2)
             
         return energy_eval
     

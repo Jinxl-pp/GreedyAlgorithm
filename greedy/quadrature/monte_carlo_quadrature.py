@@ -13,6 +13,7 @@ class MonteCarloDomain():
                 device: cuda/cpu
         """     
         self.device = device
+        self.qtype = "MC"
 
     def interval_samples(self, interval, number_of_samples):
         """ The Monte Carlo information on 1d interval [a,b].
@@ -22,7 +23,7 @@ class MonteCarloDomain():
         quadpts = quadpts.astype(np.float64)
         weights = measure * np.ones((quadpts.shape[0],1)).astype(np.float64) 
         h = np.array([1 / number_of_samples])
-        return Quadrature(self.device, quadpts, weights, h)
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)
 
     def rectangle_samples(self, rectangle, number_of_samples):
         """ The Monte Carlo information on 2d rectangle [a,b]*[c,d].
@@ -41,7 +42,7 @@ class MonteCarloDomain():
         weights = measure * np.ones((quadpts.shape[0],1)).astype(np.float64) 
         h = np.array([1 / number_of_samples])
 
-        return Quadrature(self.device, quadpts, weights, h)        
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)        
 
     def cuboid_samples(self, cuboid, number_of_samples):
         """ The Monte Carlo information on 3d cuboid [a,b]*[c,d]*[e,f].
@@ -63,7 +64,7 @@ class MonteCarloDomain():
         weights = measure * np.ones((quadpts.shape[0],1)).astype(np.float64) 
         h = np.array([1 / number_of_samples])
         
-        return Quadrature(self.device, quadpts, weights, h)      
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)      
 
     def circle_samples(self, center, radius, number_of_samples):
         """ The Monte Carlo information on 2d circle.
@@ -85,7 +86,7 @@ class MonteCarloDomain():
         weights = measure * np.ones((quadpts.shape[0],1)).astype(np.float64) 
         h = np.array([1 / number_of_samples])
  
-        return Quadrature(self.device, quadpts, weights, h)
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)
 
     def sphere_samples(self, center, radius, number_of_samples):
         """ The Monte Carlo information on 3d ball.
@@ -111,7 +112,7 @@ class MonteCarloDomain():
         quadpts = np.concatenate((quadpts_x, quadpts_y, quadpts_z), axis=1).astype(np.float64)
         weights = measure * np.ones((quadpts.shape[0],1)).astype(np.float64) 
         h = np.array([1 / number_of_samples])
-        return Quadrature(self.device, quadpts, weights, h)        
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)        
 
 
 class MonteCarloQuadrature(MonteCarloDomain):
@@ -150,7 +151,7 @@ class MonteCarloQuadrature(MonteCarloDomain):
         quadpts = interval.reshape(-1,1).astype(np.float64)
         weights = np.ones_like(quadpts).astype(np.float64)
         h = np.array([1/2], dtype=np.float64)
-        return Quadrature(self.device, quadpts, weights, h)
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)
         
     def rectangle_boundary_samples(self, rectangle, number_of_each_hyperplane):
 
@@ -165,14 +166,14 @@ class MonteCarloQuadrature(MonteCarloDomain):
         pts_x_y_1 = np.concatenate((interval_samples_0.quadpts, rectangle[1][1]*y), axis=1)
         pts_y_x_0 = np.concatenate((rectangle[0][0]*x, interval_samples_1.quadpts), axis=1)
         pts_y_x_1 = np.concatenate((rectangle[0][1]*x, interval_samples_1.quadpts), axis=1)
-        wei_x_y_0 = wei_x_y_1 = interval_samples_0.weights
-        wei_y_x_0 = wei_y_x_1 = interval_samples_1.weights
+        wei_x_y = interval_samples_0.weights[0][0].item()
+        wei_y_x = interval_samples_1.weights[0][0].item()
 
         quadpts = np.concatenate((pts_x_y_0, pts_x_y_1, pts_y_x_0, pts_y_x_1), axis=0)
-        weights = np.concatenate((wei_x_y_0, wei_x_y_1, wei_y_x_0, wei_y_x_1), axis=0) 
-        h = np.array([1/number_of_each_hyperplane], dtype=np.float64)
+        weights = np.ones_like(quadpts[...,0:1]) * (wei_x_y + wei_x_y) * 2 
+        h = np.array([1/number_of_each_hyperplane/4], dtype=np.float64)
 
-        return Quadrature(self.device, quadpts, weights, h)    
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)    
 
     def cuboid_boundary_samples(self, cuboid, number_of_each_hyperplane):
 
@@ -193,15 +194,15 @@ class MonteCarloQuadrature(MonteCarloDomain):
         pts_yz_x_0 = np.concatenate((rectangle_samples_xy.quadpts, cuboid[1][0]*x), axis=1)
         pts_yz_x_1 = np.concatenate((rectangle_samples_xy.quadpts, cuboid[1][1]*x), axis=1)
 
-        wei_xy_z_0 = wei_xy_z_1 = rectangle_samples_xy.weights
-        wei_xz_y_0 = wei_xz_y_1 = rectangle_samples_xz.weights
-        wei_yz_x_0 = wei_yz_x_1 = rectangle_samples_yz.weights
+        wei_xy_z = wei_xy_z_1 = rectangle_samples_xy.weights[0][0].item()
+        wei_xz_y = wei_xz_y_1 = rectangle_samples_xz.weights[0][0].item()
+        wei_yz_x = wei_yz_x_1 = rectangle_samples_yz.weights[0][0].item()
 
         quadpts = np.concatenate((pts_xy_z_0, pts_xy_z_1, pts_xz_y_0, pts_xz_y_1, pts_yz_x_0, pts_yz_x_1), axis=0)
-        weights = np.concatenate((wei_xy_z_0, wei_xy_z_1, wei_xz_y_0, wei_xz_y_1, wei_yz_x_0, wei_yz_x_1), axis=0)
-        h = np.array([1/number_of_each_hyperplane], dtype=np.float64)
+        weights = weights = np.ones_like(quadpts[...,0:1]) * (wei_xy_z + wei_xz_y + wei_yz_x) * 2
+        h = np.array([1/number_of_each_hyperplane/6], dtype=np.float64)
 
-        return Quadrature(self.device, quadpts, weights, h)
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)
 
     def circle_boundary_samples(self, center, radius, number_of_samples):
         """ The Monte Carlo information on 2d circle's boundary.
@@ -221,7 +222,7 @@ class MonteCarloQuadrature(MonteCarloDomain):
         quadpts = np.concatenate((quadpts_x, quadpts_y), axis=1).astype(np.float64)
         weights = np.array([[measure]], dtype=np.float64)
         h = np.array([1 / number_of_samples])
-        return Quadrature(self.device, quadpts, weights, h)
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)
 
     def sphere_boundary_samples(self, center, radius, number_of_samples):
         """ The Monte Carlo information on 3d shpere.
@@ -247,4 +248,4 @@ class MonteCarloQuadrature(MonteCarloDomain):
         quadpts = np.concatenate((quadpts_x, quadpts_y, quadpts_z), axis=1).astype(np.float64)
         weights = np.array([[measure]], dtype=np.float64)
         h = np.array([1 / number_of_samples])
-        return Quadrature(self.device, quadpts, weights, h) 
+        return Quadrature(self.qtype, self.device, quadpts, weights, h) 

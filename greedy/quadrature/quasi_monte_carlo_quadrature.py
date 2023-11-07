@@ -25,6 +25,7 @@ class QuasiMonteCarloQuadrature():
         """     
 
         self.device = device
+        self.qtype = "QMC"
         
     def _prime(self, index):
         

@@ -17,6 +17,7 @@ class GaussLegendreDomain():
         """
         
         self.device = device
+        self.qtype = "GQ"
         
         if index == 0:
             self.quadpts = np.array([[0.]], dtype=np.float64)
@@ -49,7 +50,7 @@ class GaussLegendreDomain():
         quadpts = point.astype(np.float64)
         weights = np.ones_like(quadpts).astype(np.float64)
         h = np.array([1.], dtype=np.float64)
-        return Quadrature(self.device, quadpts, weights, h)
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)
         
             
     def interval_quadpts(self, interval, h):
@@ -74,7 +75,7 @@ class GaussLegendreDomain():
         weights = np.tile(self.weights, quadpts.shape[1])
         quadpts = quadpts.flatten().reshape(-1,1)
         weights = weights.flatten().reshape(-1,1)
-        return Quadrature(self.device, quadpts, weights, h)
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)
     
     def interval_quadpts_exact(self, x, h):
         """ The Gauss-Lengendre quadrature information on a discretized mesh of 1d interval [a,b], 
@@ -94,7 +95,7 @@ class GaussLegendreDomain():
         weights = weights.flatten().reshape(-1,1) 
         h = np.tile(h,(len(self.quadpts),1))
         h = h.flatten().reshape(-1,1)  
-        return Quadrature(self.device, quadpts, weights, h)
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)
     
     def rectangle_quadpts(self, rectangle, h):
         """ The Gauss-Lengendre quadrature information on a discretized mesh of 2d rectangle [a,b]*[c,d].
@@ -133,7 +134,7 @@ class GaussLegendreDomain():
         weights_y = weights_y.flatten().reshape(-1,1)
         weights = weights_x * weights_y
 
-        return Quadrature(self.device, quadpts, weights, h)
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)
     
     def cuboid_quadpts(self, cuboid, h):
         """ The Gauss-Lengendre quadrature information on a discretized mesh of 3d cuboid [a,b]*[c,d]*[e,f].
@@ -179,7 +180,7 @@ class GaussLegendreDomain():
         weights_z = weights_z.flatten().reshape(-1,1)
         weights = weights_x * weights_y * weights_z
         
-        return Quadrature(self.device, quadpts, weights, h)
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)
 
     
 class GaussLegendreQuadrature(GaussLegendreDomain):
@@ -211,7 +212,7 @@ class GaussLegendreQuadrature(GaussLegendreDomain):
         quadpts = interval.reshape(-1,1).astype(np.float64)
         weights = np.ones_like(quadpts).astype(np.float64)
         h = np.array([1.], dtype=np.float64)
-        return Quadrature(self.device, quadpts, weights, h)
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)
 
     def rectangle_boundary_quadpts(self, rectangle, h):
         
@@ -233,7 +234,7 @@ class GaussLegendreQuadrature(GaussLegendreDomain):
         quadpts = np.concatenate((pts_x_y_0, pts_x_y_1, pts_y_x_0, pts_y_x_1), axis=0)
         weights = np.concatenate((wei_x_y_0, wei_x_y_1, wei_y_x_0, wei_y_x_1), axis=0) 
 
-        return Quadrature(self.device, quadpts, weights, h)
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)
 
     def cuboid_boundary_quadpts(self, cuboid, h):
 
@@ -266,4 +267,4 @@ class GaussLegendreQuadrature(GaussLegendreDomain):
         quadpts = np.concatenate((pts_xy_z_0, pts_xy_z_1, pts_xz_y_0, pts_xz_y_1, pts_yz_x_0, pts_yz_x_1), axis=0)
         weights = np.concatenate((wei_xy_z_0, wei_xy_z_1, wei_xz_y_0, wei_xz_y_1, wei_yz_x_0, wei_yz_x_1), axis=0)
 
-        return Quadrature(self.device, quadpts, weights, h)
+        return Quadrature(self.qtype, self.device, quadpts, weights, h)

@@ -2,8 +2,9 @@ import torch
 import numpy as np
 
 class Quadrature(object):
-    def __init__(self, device, quadpts, weights, h):
+    def __init__(self, qtype, device, quadpts, weights, h):
         # weights = weights[:,0]
+        self.qtype = qtype
         self.quadpts = torch.from_numpy(quadpts).type(dtype=torch.float64).to(device)
         self.weights = torch.from_numpy(weights).type(dtype=torch.float64).to(device)
         h = torch.tensor(h).type(dtype=torch.float64).to(device)
