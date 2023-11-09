@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from . import energy 
 
-class FNM_L2fitting_1d(energy.AbstractEnergy): 
+class FNM_L2fitting_1d(energy.LinearEnergy): 
     
     def __init__(self, 
                 activation,

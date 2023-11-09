@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from . import energy 
 
-class PINN_AllenCahn_2d_DBC(energy.AbstractEnergy): 
+class PINN_AllenCahn_2d_DBC(energy.NonlinearEnergy): 
     
     def __init__(self, 
                 activation,
@@ -181,10 +181,6 @@ class PINN_AllenCahn_2d_DBC(energy.AbstractEnergy):
         residual_init = residual_init.sum() * self.area_init * self.penalty_init
         
         return residual_in + residual_bd + residual_init    
-    
-    
-    def get_stiffmat_and_rhs(self):
-        pass
 
 
     def get_nonlinear_system(self, cur_solution, core_in, core_bd, core_init):

@@ -17,14 +17,14 @@ from abc import ABC, abstractmethod
 ##=============================================##
 
 
-class AbstractEnergy(ABC):
+class LinearEnergy(ABC):
 
     @abstractmethod
-    def _get_energy_items(self, obj_func):
+    def _get_energy_items(self):
         pass
     
     @abstractmethod
-    def _energy_norm(self, obj_func):
+    def _energy_norm(self):
         pass
     
     @abstractmethod
@@ -32,18 +32,56 @@ class AbstractEnergy(ABC):
         pass
     
     @abstractmethod
-    def get_stiffmat_and_rhs(self, parameters, core_matrix):
+    def get_stiffmat_and_rhs(self):
         pass
     
     @abstractmethod
-    def evaluate(self, param): #, pre_solution): 
+    def evaluate(self): #, pre_solution): 
         """ mark: set pre_solution as an intilaization of energy,
                   save the complexity when calling this function.
         """
         pass
     
     @abstractmethod
-    def evaluate_large_scale(self, param): #, pre_solution):
+    def evaluate_large_scale(self): #, pre_solution):
+        """ 
+        mark_1: set pre_solution as an intilaization of energy,
+                save the complexity when calling this function.
+        mark_2: if base_dim=1, just call evaluate(theta). 
+                Otherwise this function needs to be defined.
+        """
+        pass
+    
+    
+    
+    
+class NonlinearEnergy(ABC):
+    
+    @abstractmethod
+    def _get_energy_items(self):
+        pass
+    
+    @abstractmethod
+    def _energy_norm(self):
+        pass
+    
+    @abstractmethod
+    def energy_error(self):
+        pass
+    
+    @abstractmethod
+    def get_nonlinear_system(self):
+        pass
+    
+    @abstractmethod
+    def evaluate(self): #, pre_solution): 
+        """ mark: set pre_solution as an intilaization of energy,
+                  save the complexity when calling this function.
+        """
+        pass
+    
+    @abstractmethod
+    def evaluate_large_scale(self): #, pre_solution):
         """ 
         mark_1: set pre_solution as an intilaization of energy,
                 save the complexity when calling this function.

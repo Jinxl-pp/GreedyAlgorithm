@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from . import energy 
 
-class PINN_Elliptic_2nd_1d_NBC(energy.AbstractEnergy): 
+class PINN_Elliptic_2nd_1d_NBC(energy.LinearEnergy): 
     
     def __init__(self, 
                 activation,

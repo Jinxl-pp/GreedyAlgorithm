@@ -190,17 +190,17 @@ class NeuronDictionary1D(dt.AbstractDictionary): # shallow_neural_dict with 1D i
         pde_energy = energy.evaluate_large_scale
         theta_init_guess = self._select_initial_elements(pde_energy, best_k=1)
         end_0 = time.time()
-        print('\n Initial guess time = {:.4f}s'.format(end_0 - start_0))
+        # print('\n Initial guess time = {:.4f}s'.format(end_0 - start_0))
 
         if self.optimizer:    
             # process the optimization 
             start_1 = time.time()
             optimizer_type = self.optimizer
             pde_energy = energy.evaluate
-            print('\n Start optimization:')
+            # print('\n Start optimization:')
             theta_list, evaluate_list = self._argmax_optimize(pde_energy, theta_init_guess, optimizer_type)
             end_1 = time.time()
-            print(' optimization time = {:.4f}s'.format(end_1 - start_1))
+            # print(' optimization time = {:.4f}s'.format(end_1 - start_1))
             
             # find the best element via the list of evaluation
             index = evaluate_list.argmin()
@@ -210,7 +210,7 @@ class NeuronDictionary1D(dt.AbstractDictionary): # shallow_neural_dict with 1D i
         
         # total time cost
         end_2 = time.time()
-        print('\n Total selection time = {:.4f}s'.format(end_2 - start_0))
+        # print('\n Total selection time = {:.4f}s'.format(end_2 - start_0))
         
         # return the parameters of the best element
         return optimal_element

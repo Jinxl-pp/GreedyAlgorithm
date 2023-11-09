@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from . import energy 
 
-class PINN_Poisson_1d_DBC(energy.AbstractEnergy): 
+class PINN_Poisson_1d_DBC(energy.LinearEnergy): 
     
     def __init__(self, 
                 activation,

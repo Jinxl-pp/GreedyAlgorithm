@@ -3,7 +3,7 @@ from torch.autograd import Variable
 import numpy as np
 from . import energy 
 
-class FNM_Elliptic_4th_1d_NBC(energy.AbstractEnergy): 
+class FNM_Elliptic_4th_1d_NBC(energy.LinearEnergy): 
     
     def __init__(self, 
                 activation,
